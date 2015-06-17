@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+    xsi:schemaLocation="http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context-3.0.xsd
+          http://www.springframework.org/schema/data/mongo
+          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <!-- alfresco-benchmark-tests-device-sync : -->
+
+    <!-- Import any application contexts for test runs -->
+    <import resource="classpath:config/spring/test-common-context.xml" />
+    <import resource="classpath:config/spring/test-http-context.xml" />
+
+    <!--         -->
+    <!-- Http    -->
+    <!--         -->
+
+    <!-- Shared HTTP-Client instance provider to have better performance -->
+    <bean id="httpClientProvider" class="org.alfresco.http.SharedHttpClientProvider">
+         <constructor-arg name="maxNumberOfConnections" value="${http.connection.max}" />
+         <constructor-arg name="connectionTimeoutMs" value="${http.connection.timeoutMs}" />
+         <constructor-arg name="socketTimeoutMs" value="${http.socket.timeoutMs}" />
+         <constructor-arg name="socketTtlMs" value="${http.socket.ttlMs}" />
+    </bean>
+
+    <!--            -->
+    <!-- DAO        -->
+    <!--            -->
+    <!-- <bean id="processDataDAO" class="org.alfresco.bm.data.ProcessDataDAO" > <constructor-arg name="db" ref="testMongoDB" 
+        /> <constructor-arg name="collection" value="mirrors.${proc.dataMirror}.processes" /> </bean> -->
+
+    <!--                        -->
+    <!-- User Data Service      -->
+    <!--                        -->
+    <bean id="userDataService" class="org.alfresco.bm.user.UserDataServiceImpl">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${users.collectionName}" />
+    </bean>
+
+    <!--                        -->
+    <!-- Site Data Service      -->
+    <!--                        -->
+    <bean id="siteDataService" class="org.alfresco.bm.site.SiteDataServiceImpl">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="sites" value="${mirror.sites}" />
+        <constructor-arg name="siteMembers" value="${mirror.siteMembers}" />
+    </bean>
+
+    <bean id="subscribersDataService" class="org.alfresco.bm.devicesync.dao.mongo.MongoSubscribersService">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${mirror.subscribers}" />
+    </bean>
+
+    <bean id="subscriptionsDataService" class="org.alfresco.bm.devicesync.dao.mongo.MongoSubscriptionsService">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${mirror.subscriptions}" />
+    </bean>
+
+    <bean id="syncsDataService" class="org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${mirror.syncs}" />
+    </bean>
+
+    <bean id="metricsService" class="org.alfresco.bm.devicesync.dao.mongo.MongoMetricsService">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${testRunFqn}.${syncMetrics}" />
+    </bean>
+
+    <!--            -->
+    <!-- Lifecycle  -->
+    <!--            -->
+
+    <bean id="testLifeCycleController" class="org.alfresco.bm.test.LifecycleController">
+        <constructor-arg>
+            <array>
+                <ref bean="eventController" />
+                <!-- 
+                <ref bean="clientRegistry" />
+                 -->
+            </array>
+        </constructor-arg>
+    </bean>
+
+    <!--                    -->
+    <!-- Auth provider      -->
+    <!--                    -->
+    <bean id="authenticationDetailsProvider" class="org.alfresco.bm.http.UserDataAutheticationDetailsProvider">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="adminUserName" value="${alfresco.admin.user}" />
+        <constructor-arg name="adminPassword" value="${alfresco.admin.pwd}" />
+    </bean>
+
+    <!--                                -->
+    <!-- Client Create Data Defaults    -->
+    <!--                                -->
+    <!--                                -->
+    <!-- 
+    <bean id="clientCreateData" class="org.alfresco.bm.desktopsync.client.DesktopSyncCreateData">
+        <constructor-arg name="repoUrl_p" value="${alfresco.url}" />
+        <constructor-arg name="repoUser_p" value="${alfresco.admin.user}" />
+        <constructor-arg name="repoUserPwd_p" value="${alfresco.admin.pwd}" />
+        <constructor-arg name="labelCompanyHome_p" value="${alfresco.labelCompanyHome}" />
+        <constructor-arg name="labelDocumentLibrary" value="${alfresco.labelDocumentLibrary}" />
+        <constructor-arg name="labelSites_p" value="${alfresco.labelSites}" />
+        <constructor-arg name="remoteFolderLocation_p" value="${alfresco.remoteBaseFolderLocation}" />
+        <constructor-arg name="localFolderLocation_p" value="${desktopsync.localBaseFolderLocation}" />
+        <constructor-arg name="proxyType_p" value="${proxy.type}" />
+        <constructor-arg name="proxyHost_p" value="${proxy.host}" />
+        <constructor-arg name="proxyPort_p" value="${proxy.port}" />
+        <constructor-arg name="proxyUser_p" value="${proxy.user}" />
+        <constructor-arg name="proxyUserPwd_p" value="${proxy.user.pwd}" />
+        <constructor-arg name="pollPeriodMillis_p" value="${alfresco.pollIntervallMilliseconds}" />
+    </bean>
+ -->
+ 
+    <!--                -->
+    <!-- Test Files     -->
+    <!--                -->
+    <!-- Contrived example in order to demonstrate how test files can be obtained. The LocalTestFileService can also be used 
+        but it limits how your tests can be distributed. -->
+        <!-- 
+    <bean id="fileDataService" class="org.alfresco.bm.file.FileDataServiceImpl">
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${files.collection.name}" />
+    </bean>
+    <bean id="testFileService" class="org.alfresco.bm.file.FtpTestFileService">
+        <constructor-arg name="fileDataService" ref="fileDataService" />
+        <constructor-arg name="localDir" value="${files.cache.dir}" />
+        <constructor-arg name="ftpHost" value="${files.ftp.host}" />
+        <constructor-arg name="ftpPort" value="${files.ftp.port}" />
+        <constructor-arg name="ftpUsername" value="${files.ftp.username}" />
+        <constructor-arg name="ftpPassword" value="${files.ftp.password}" />
+        <constructor-arg name="ftpPath" value="${files.ftp.path}" />
+    </bean>
+ -->
+ 
+     <!-- API factories -->
+
+    <bean id="publicApiFactory" class="org.alfresco.bm.devicesync.util.BasicAuthPublicApiFactory">
+        <constructor-arg name="repoScheme" value="${alfresco.scheme}"/>
+        <constructor-arg name="repoHost" value="${alfresco.server}"/>
+        <constructor-arg name="repoPort" value="${alfresco.port}"/>
+        <constructor-arg name="syncScheme" value="${sync.scheme}"/>
+        <constructor-arg name="syncHost" value="${sync.server}"/>
+        <constructor-arg name="syncPort" value="${sync.port}"/>
+        <constructor-arg name="subsScheme" value="${subs.scheme}"/>
+        <constructor-arg name="subsHost" value="${subs.server}"/>
+        <constructor-arg name="subsPort" value="${subs.port}"/>
+        <constructor-arg name="preferredCMISEndPoint"><null/></constructor-arg>
+        <constructor-arg name="maxNumberOfConnections" value="${http.connection.max}"/>
+        <constructor-arg name="connectionTimeoutMs" value="${http.connection.timeoutMs}"/>
+        <constructor-arg name="socketTimeoutMs" value="${http.socket.timeoutMs}"/>
+        <constructor-arg name="socketTtlMs" value="${http.socket.ttlMs}"/>
+        <constructor-arg name="userDataService" ref="userDataService"/>
+        <constructor-arg name="context" value="alfresco"/>
+        <constructor-arg name="publicApiServletName" value="api"/>
+        <constructor-arg name="serviceServletName" value="services"/>
+    </bean>
+
+    <!--                    -->
+    <!-- EventProcessors    -->
+    <!--                    -->
+    <!-- The event processors will handle events based on their bean names after removal of the 'event.' prefix. So, for 
+        example: bean "event.start" will handle events named "start" bean "event.invite" will handle events named "invite" This behaviour 
+        can be overridden. See the javadocs of AbstractEventProcessor. The 'producer.process' bean shows how an event can be redirected 
+        with an optional delay: in this case, to 'event.doProcess'. The 'producer.users.ready' renames the 'users.ready' event to 
+        'scheduleProcesses' without any other modification. The 'producer.processDone' effectively absorbs the 'processDone' events. -->
+
+    <!-- Good practice to start with an event rename as the 'start' event is reserved -->
+    <bean id="event.start" class="org.alfresco.bm.event.RenameEventProcessor" parent="event.base">
+        <constructor-arg name="outputEventName" value="prepareSubscribers" />
+        <property name="chart" value="false" />
+    </bean>
+
+    <bean id="event.prepareSubscribers" class="org.alfresco.bm.devicesync.eventprocessor.PrepareSubscribers" parent="event.base">
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="eventNameSubscribersBatch" value="subscribersBatch" />
+        <constructor-arg name="nextEventName" value="prepareSubscriptions" />
+        <constructor-arg name="maxSubscribers" value="${prepareSubscribers.maxSubscribers}" />
+    </bean>
+
+    <bean id="event.prepareSubscriptions" class="org.alfresco.bm.devicesync.eventprocessor.PrepareSubscriptions" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="eventNameSubscriptionsBatch" value="subscriptionsBatch" />
+        <constructor-arg name="nextEventName" value="batchProcessor" />
+        <constructor-arg name="maxSubscriptions" value="${prepareSubscriptions.maxSubscriptions}" />
+    </bean>
+
+    <bean id="event.batchProcessor" class="org.alfresco.bm.devicesync.eventprocessor.BatchProcessor" parent="event.base">
+        <constructor-arg name="eventNameSubscribersBatch" value="subscribersBatch" />
+        <constructor-arg name="eventNameSubscriptionsBatch" value="subscriptionsBatch" />
+        <constructor-arg name="eventNameSyncBatch" value="syncBatch" />
+        <constructor-arg name="eventNameCollectStatsBatch" value="collectStatsBatch" />
+    </bean>
+
+    <bean id="event.collectStatsBatch" class="org.alfresco.bm.devicesync.eventprocessor.CollectStatsBatch" parent="event.base">
+        <constructor-arg name="numBatches" value="${collectStatsBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${collectStatsBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameCollectStats" value="collectStats" />
+    </bean>
+
+    <bean id="event.collectStats" class="org.alfresco.bm.devicesync.eventprocessor.CollectStats" parent="event.base">
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="metricsService" ref="metricsService" />
+    </bean>
+
+    <bean id="event.subscribersBatch" class="org.alfresco.bm.devicesync.eventprocessor.SubscribersBatch" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="batchSize" value="${subscribersBatch.batchSize}" />
+        <constructor-arg name="numBatches" value="${subscribersBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${subscribersBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameCreateSubscriber" value="createSubscriber" />
+    </bean>
+
+    <bean id="event.subscriptionsBatch" class="org.alfresco.bm.devicesync.eventprocessor.SubscriptionsBatch" parent="event.base">
+        <constructor-arg name="subscribersDataService" ref="subscribersDataService" />
+        <constructor-arg name="batchSize" value="${subscriptionsBatch.batchSize}" />
+        <constructor-arg name="numBatches" value="${subscriptionsBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${subscriptionsBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameCreateSubscription" value="createSubscription" />
+    </bean>
+
+    <bean id="event.createSubscription" class="org.alfresco.bm.devicesync.eventprocessor.CreateSubscription" parent="event.base">
+        <constructor-arg name="siteDataService" ref="siteDataService" />
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.deleteSubscription" class="org.alfresco.bm.devicesync.eventprocessor.DeleteSubscription" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.createSubscriber" class="org.alfresco.bm.devicesync.eventprocessor.CreateSubscriber" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.deleteSubscriber" class="org.alfresco.bm.devicesync.eventprocessor.DeleteSubscriber" parent="event.base">
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.syncBatch" class="org.alfresco.bm.devicesync.eventprocessor.SyncBatch" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="batchSize" value="${syncBatch.batchSize}" />
+        <constructor-arg name="numBatches" value="${syncBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${syncBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameStartSync" value="startSync" />
+    </bean>
+
+    <bean id="event.startSync" class="org.alfresco.bm.devicesync.eventprocessor.StartSync" parent="event.base">
+        <constructor-arg name="sessionService" ref="sessionService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="waitTimeMillisBeforeSyncOps" value="${sync.waitTimeMillisBeforeSyncOps}" />
+    </bean>
+
+    <bean id="event.getSync" class="org.alfresco.bm.devicesync.eventprocessor.GetSync" parent="event.base">
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="waitTimeMillisBeforeSyncOps" value="${sync.waitTimeMillisBeforeSyncOps}" />
+        <constructor-arg name="maxTries" value="${sync.getSync.maxTries}" />
+    </bean>
+
+    <bean id="event.endSync" class="org.alfresco.bm.devicesync.eventprocessor.EndSync" parent="event.base">
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.prepareSyncs" class="org.alfresco.bm.devicesync.eventprocessor.PrepareSyncs" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="numBatches" value="${prepareSyncs.numBatches}" />
+        <constructor-arg name="eventNameStartSync" value="startSync" />
+        <constructor-arg name="waitTimeBetweenSyncs" value="${prepareSyncs.waitTimeBetweenSyncs}" />
+        <constructor-arg name="batchSize" value="${prepareSyncs.batchSize}" />
+    </bean>
+
+<!-- 
+    <bean id="event.createPeriodicSubscribers" class="org.alfresco.bm.devicesync.eventprocessor.CreatePeriodicSubscribers" parent="event.base">
+        <constructor-arg name="subscribersServiceService" ref="subscribersServiceDataService" />
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.createPeriodicSubscriptions" class="org.alfresco.bm.devicesync.eventprocessor.CreatePeriodicSubscriptions" parent="event.base">
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="siteDataService" ref="siteDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+    </bean>
+
+    <bean id="event.createSubscribers" class="org.alfresco.bm.devicesync.eventprocessor.CreateSubscribers" parent="event.base">
+        <constructor-arg name="subscribersService" ref="subscribersDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="batchSize" value="${createSubscribers.batchSize}" />
+        <constructor-arg name="eventNamePrepareSubscriptions" value="prepareSubscriptions" />
+        <constructor-arg name="eventNameCreateSubscribers" value="createSubscribers" />
+    </bean>
+ 
+     <bean id="event.createSubscriptions" class="org.alfresco.bm.devicesync.eventprocessor.CreateSubscriptions" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="batchSize" value="${createSubscriptions.batchSize}" />
+        <constructor-arg name="eventNamePrepareSyncs" value="prepareSyncs" />
+        <constructor-arg name="eventNameCreateSubscriptions" value="createSubscriptions" />
+    </bean>
+     -->
+</beans>

@@ -1,0 +1,25 @@
+package org.alfresco.bm.devicesync.dao;
+
+import java.util.List;
+
+import org.alfresco.bm.data.DataCreationState;
+import org.alfresco.bm.devicesync.data.SubscriberData;
+import org.bson.types.ObjectId;
+
+/**
+ * 
+ * @author sglover
+ *
+ */
+public interface SubscribersService
+{
+	void addSubscriber(String username, DataCreationState state);
+	void addSubscriber(String username, String subscriberId, DataCreationState state);
+	void removeSubscriber(String subscriberId);
+	void updateSubscriber(ObjectId objectId, String subscriberId, DataCreationState state);
+	void updateSubscriber(ObjectId objectId, DataCreationState state);
+	String getSubscriber(String username);
+	List<SubscriberData> getSubscribers(DataCreationState creationState, int skip, int count);
+	long countSubscribers(DataCreationState state);
+	SubscriberData getRandomSubscriber(String username);
+}
