@@ -116,7 +116,7 @@ public class CreateSubscription extends AbstractEventProcessor
         }
         catch (Exception e)
         {
-            logger.error("Error creating subscriber. ", e);
+            logger.error("Error creating subscription. ", e);
             throw e;
         }
     }

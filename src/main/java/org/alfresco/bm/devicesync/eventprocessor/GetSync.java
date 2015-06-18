@@ -1,7 +1,6 @@
 package org.alfresco.bm.devicesync.eventprocessor;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -128,10 +127,8 @@ public class GetSync extends AbstractEventProcessor
         }
         catch (Exception e)
         {
-            String msg = "Exception occurred during event processing: Terminate desktop sync client '";
-            logger.error(msg, e);
-
-            return new EventResult(msg, Collections.emptyList());
+            logger.error("Exception occurred during event processing: Terminate desktop sync client", e);
+            throw e;
         }
     }
 }

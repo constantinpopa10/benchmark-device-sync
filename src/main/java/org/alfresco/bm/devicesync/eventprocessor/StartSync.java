@@ -115,10 +115,8 @@ public class StartSync extends AbstractEventProcessor
         }
         catch (Exception e)
         {
-            String msg = "Exception occurred during start sync.";
-            logger.error(msg, e);
-
-            return new EventResult(msg, Collections.emptyList());
+            logger.error("Exception occurred during start sync.", e);
+            throw e;
         }
     }
 }
