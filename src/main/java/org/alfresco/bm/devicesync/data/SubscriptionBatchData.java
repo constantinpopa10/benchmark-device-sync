@@ -1,8 +1,7 @@
 package org.alfresco.bm.devicesync.data;
 
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_COUNT;
-
 import java.io.Serializable;
+import java.util.List;
 
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
@@ -16,6 +15,7 @@ public class SubscriptionBatchData implements Serializable
 {
 	private static final long serialVersionUID = 946578159221599841L;
 
+	public static final String FIELD_COUNT = "count";
 	public static final String FIELD_NEXT_EVENT_NAME = "nextEventName";
 	public static final String FIELD_BATCH_SIZE = "batchSize";
 	public static final String FIELD_NUM_BATCHES = "numBatches";
@@ -26,15 +26,17 @@ public class SubscriptionBatchData implements Serializable
 	private Integer waitTimeBetweenBatches; 
 	private Integer batchSize;
 	private String nextEventName;
+	private List<String> sites;
 
 	public SubscriptionBatchData(int count, Integer batchSize, Integer numBatches, Integer waitTimeBetweenBatches,
-			String nextEventName)
+			String nextEventName, List<String> sites)
 	{
 		this.count = count;
 		this.batchSize = batchSize;
 		this.numBatches = numBatches;
 		this.waitTimeBetweenBatches = waitTimeBetweenBatches;
 		this.nextEventName = nextEventName;
+		this.sites = sites;
 	}
 
 	public SubscriptionBatchData(int count)
@@ -43,7 +45,12 @@ public class SubscriptionBatchData implements Serializable
 	    this.count = count;
     }
 
-    public String getNextEventName()
+    public List<String> getSites()
+	{
+		return sites;
+	}
+
+	public String getNextEventName()
 	{
 		return nextEventName;
 	}
@@ -75,11 +82,13 @@ public class SubscriptionBatchData implements Serializable
         		.add(FIELD_BATCH_SIZE, batchSize)
         		.add(FIELD_NUM_BATCHES, numBatches)
         		.add(FIELD_WAIT_TIME_BETWEEN_BATCHES, waitTimeBetweenBatches)
-        		.add(FIELD_NEXT_EVENT_NAME, nextEventName);
+        		.add(FIELD_NEXT_EVENT_NAME, nextEventName)
+        		.add("sites", sites);
     	DBObject dbObject = builder.get();
     	return dbObject;
     }
 
+    @SuppressWarnings("unchecked")
     public static SubscriptionBatchData fromDBObject(DBObject dbObject)
     {
     	Integer count = (Integer)dbObject.get(FIELD_COUNT);
@@ -87,8 +96,9 @@ public class SubscriptionBatchData implements Serializable
     	Integer numBatches = (Integer)dbObject.get(FIELD_NUM_BATCHES);
     	Integer waitTimeBetweenBatches = (Integer)dbObject.get(FIELD_WAIT_TIME_BETWEEN_BATCHES);
     	String nextEventName = (String)dbObject.get(FIELD_NEXT_EVENT_NAME);
+    	List<String> sites = (List<String>)dbObject.get("sites");
     	SubscriptionBatchData subscriptionBatchData = new SubscriptionBatchData(count, batchSize, numBatches,
-    			waitTimeBetweenBatches, nextEventName);
+    			waitTimeBetweenBatches, nextEventName, sites);
     	return subscriptionBatchData;
     }
 }

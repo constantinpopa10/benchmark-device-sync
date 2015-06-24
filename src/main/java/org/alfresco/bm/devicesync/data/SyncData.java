@@ -1,14 +1,5 @@
 package org.alfresco.bm.devicesync.data;
 
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_END_TIME;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_MAX_RETRIES_HIT;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_NUM_RETRIES;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_NUM_SYNC_CHANGES;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_SUBSCRIBER_ID;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_SUBSCRIPTION_ID;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_SYNC_ID;
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_USERNAME;
-
 import java.io.Serializable;
 import java.util.List;
 
@@ -20,6 +11,23 @@ import com.mongodb.DBObject;
 
 public class SyncData implements Serializable
 {
+	public static String FIELD_SITE_ID = "siteId";
+	public static String FIELD_SYNC_ID = "syncId";
+	public static String FIELD_USERNAME = "username";
+	public static String FIELD_RANDOMIZER = "randomizer";
+	public static String FIELD_SUBSCRIBER_ID = "subscriberId";
+	public static String FIELD_SUBSCRIPTION_ID = "subscriptionId";
+	public static String FIELD_SUBSCRIPTION_TYPE = "subscriptionType";
+	public static String FIELD_PATH = "path";
+	public static String FIELD_STATE = "state";
+	public static String FIELD_MESSAGE = "message";
+	public static String FIELD_MAX_RETRIES_HIT = "maxRetriesHit";
+	public static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
+	public static String FIELD_MSG = "msg";
+	public static String FIELD_NUM_RETRIES = "numRetries";
+	public static String FIELD_END_TIME = "endTime";
+	public static String FIELD_COUNT = "count";
+
 	private static final long serialVersionUID = 946578159221599841L;
 
 	private Long endTime;
@@ -30,52 +38,43 @@ public class SyncData implements Serializable
 	private String username;
 	private String subscriberId;
 	private String subscriptionId;
+	private String siteId;
 	private String syncId;
 	private String result;
+	private String msg;
 
-	public SyncData(String username, String subscriberId, String subscriptionId, Long endTime)
+	public SyncData(String siteId, String username, String subscriberId, String subscriptionId, Long endTime)
     {
-	    super();
-	    this.username = username;
-	    this.subscriberId = subscriberId;
-	    this.subscriptionId = subscriptionId;
-	    this.endTime = endTime;
+	    this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0, false, endTime, null);
     }
 
-	public SyncData(String username, String subscriberId, String subscriptionId, String syncId, Long endTime)
+	public SyncData(String siteId, String username, String subscriberId, String subscriptionId,
+			String syncId, Long endTime)
     {
-	    super();
-	    this.username = username;
-	    this.subscriberId = subscriberId;
-	    this.subscriptionId = subscriptionId;
-	    this.syncId = syncId;
-	    this.endTime = endTime;
+	    this(null, siteId, username, subscriberId, subscriptionId, syncId, -1, 0, false, endTime, "Get sync " + syncId);
     }
 
-	public SyncData(ObjectId objectId, String username, String subscriberId, String subscriptionId, String syncId)
+	public SyncData(ObjectId objectId, String siteId, String username, String subscriberId, String subscriptionId,
+			String syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg)
     {
 	    super();
+    	this.msg = msg;
 	    this.objectId = objectId;
+	    this.siteId = siteId;
 	    this.username = username;
 	    this.subscriberId = subscriberId;
 	    this.subscriptionId = subscriptionId;
 	    this.syncId = syncId;
-    }
-
-	public SyncData(ObjectId objectId, String username, String subscriberId, String subscriptionId, String syncId,
-			int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime)
-    {
-	    super();
-	    this.objectId = objectId;
-	    this.username = username;
-	    this.subscriberId = subscriberId;
-	    this.subscriptionId = subscriptionId;
-	    this.syncId = syncId;
+	    this.endTime = endTime;
 	    this.numSyncChanges = numSyncChanges;
 	    this.numRetries = numRetries;
 	    this.maximumRetriesHit = maximumRetriesHit;
-	    this.endTime = endTime;
     }
+
+	public String getSiteId()
+	{
+		return siteId;
+	}
 
 	public Long getEndTime()
 	{
@@ -128,10 +127,12 @@ public class SyncData implements Serializable
     	BasicDBObjectBuilder builder = BasicDBObjectBuilder
         		.start(FIELD_USERNAME, getUsername())
         		.add(FIELD_SUBSCRIBER_ID, getSubscriberId())
+        		.add(FIELD_SITE_ID, getSiteId())
         		.add(FIELD_SYNC_ID, getSyncId())
         		.add(FIELD_NUM_RETRIES, getNumRetries())
         		.add(FIELD_MAX_RETRIES_HIT, isMaximumRetriesHit())
-        		.add(FIELD_NUM_SYNC_CHANGES, getNumSyncChanges());
+        		.add(FIELD_NUM_SYNC_CHANGES, getNumSyncChanges())
+        		.add(FIELD_MSG, msg);
     	if(getSubscriptionId() != null)
     	{
     		builder.add(FIELD_SUBSCRIPTION_ID, getSubscriptionId());
@@ -143,11 +144,13 @@ public class SyncData implements Serializable
     public void gotResults(List<Change> changes)
     {
     	this.numSyncChanges = changes.size();
+    	this.msg = "Get sync " + syncId + " successful";
     }
 
     public void maxRetriesHit()
     {
     	this.maximumRetriesHit = true;
+    	this.msg = "Get sync " + syncId + " max retries hit";
     }
 
     public void incrementRetries()
@@ -161,13 +164,15 @@ public class SyncData implements Serializable
     	String username = (String)dbObject.get(FIELD_USERNAME);
     	String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
     	String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
+    	String siteId = (String)dbObject.get(FIELD_SITE_ID);
     	String syncId = (String)dbObject.get(FIELD_SYNC_ID);
     	int numSyncChanges = (Integer)dbObject.get(FIELD_NUM_SYNC_CHANGES);
     	int numRetries = (Integer)dbObject.get(FIELD_NUM_RETRIES);
     	boolean maximumRetriesHit = (Boolean)dbObject.get(FIELD_MAX_RETRIES_HIT);
     	Long endTime = (Long)dbObject.get(FIELD_END_TIME);
-    	SyncData syncData = new SyncData(id, username, subscriberId, subscriptionId, syncId, numSyncChanges,
-    			numRetries, maximumRetriesHit, endTime);
+    	String msg = (String)dbObject.get("msg");
+    	SyncData syncData = new SyncData(id, siteId, username, subscriberId, subscriptionId, syncId, numSyncChanges,
+    			numRetries, maximumRetriesHit, endTime, msg);
     	return syncData;
     }
 }

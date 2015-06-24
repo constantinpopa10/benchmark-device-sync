@@ -1,19 +1,24 @@
 package org.alfresco.bm.devicesync.data;
 
-import static org.alfresco.bm.devicesync.data.SyncData.FIELD_COUNT;
-
 import java.io.Serializable;
 
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
-public class CollectStatsBatchData implements Serializable
+/**
+ * 
+ * @author sglover
+ *
+ */
+public class UploadFileBatchData implements Serializable
 {
 	private static final long serialVersionUID = 946578159221599841L;
 
+	public static final String FIELD_COUNT = "count";
+
 	private int count;
 
-	public CollectStatsBatchData(int count)
+	public UploadFileBatchData(int count)
     {
 	    super();
 	    this.count = count;
@@ -32,10 +37,11 @@ public class CollectStatsBatchData implements Serializable
     	return dbObject;
     }
 
-    public static CollectStatsBatchData fromDBObject(DBObject dbObject)
+	@SuppressWarnings("unchecked")
+    public static UploadFileBatchData fromDBObject(DBObject dbObject)
     {
     	int count = (Integer)dbObject.get(FIELD_COUNT);
-    	CollectStatsBatchData syncData = new CollectStatsBatchData(count);
+    	UploadFileBatchData syncData = new UploadFileBatchData(count);
     	return syncData;
     }
 }

@@ -61,6 +61,8 @@ public class EndSync extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
     	DBObject dbObject = (DBObject)event.getData();
     	SyncData syncData = SyncData.fromDBObject(dbObject);
 
@@ -71,22 +73,22 @@ public class EndSync extends AbstractEventProcessor
     		String subscriptionId = syncData.getSubscriptionId();
     		String syncId = syncData.getSyncId();
     	    Alfresco alfresco = getAlfresco(username);
+
+        	super.resumeTimer();
 			alfresco.endSync("-default-", subscriberId, subscriptionId, syncId);
+	    	super.suspendTimer();
+
+	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
+	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),
+	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId);
 
             List<Event> nextEvents = new LinkedList<Event>();
 
-            String msg = "End sync " + syncId;
-
-            if (logger.isDebugEnabled())
-            {
-                logger.debug(msg);
-            }
-
-            return new EventResult(msg, nextEvents);
+            return new EventResult(data.toDBObject(), nextEvents);
         }
         catch (Exception e)
         {
-            logger.error("Exception occurred during event processing: Terminate desktop sync client", e);
+            logger.error("Exception occurred during event processing", e);
             throw e;
         }
     }

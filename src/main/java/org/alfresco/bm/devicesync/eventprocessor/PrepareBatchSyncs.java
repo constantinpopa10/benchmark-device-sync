@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
  * benchmark test) and the user data of the site manager. The user data was created by the initial sign-up benchmark
  * test run.
  * 
- * @author Frank Becker
+ * @author sglover
  * @since 1.0
  */
 public class PrepareBatchSyncs extends AbstractEventProcessor

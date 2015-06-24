@@ -7,6 +7,11 @@ import org.springframework.social.alfresco.api.entities.Subscription;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
+/**
+ * 
+ * @author sglover
+ *
+ */
 public class SubscriptionData
 {
 	public static String FIELD_USERNAME = "username";
@@ -16,8 +21,10 @@ public class SubscriptionData
 	public static String FIELD_SUBSCRIPTION_TYPE = "subscriptionType";
 	public static String FIELD_PATH = "path";
 	public static String FIELD_STATE = "state";
+	public static String FIELD_SITE_ID = "siteId";
 
 	private ObjectId objectId;
+	private String siteId;
 	private int randomizer;
 	private String username;
 	private String subscriberId;
@@ -26,31 +33,40 @@ public class SubscriptionData
 	private String path;
 	private DataCreationState state;
 
+	public SubscriptionData(String siteId, String username, String subscriberId)
+	{
+		this.siteId = siteId;
+	    this.username = username;
+	    this.subscriberId = subscriberId;
+	}
+
 	public SubscriptionData(String username, String subscriberId)
 	{
 	    this.username = username;
 	    this.subscriberId = subscriberId;
 	}
 
-	public SubscriptionData(ObjectId objectId, String username, String subscriberId,
+	public SubscriptionData(ObjectId objectId, String siteId, String username, String subscriberId,
 			String subscriptionId, String subscriptionType, String path, DataCreationState state,
 			int randomizer)
     {
-		this(objectId, username, subscriberId, subscriptionId, subscriptionType, path);
+		this(objectId, siteId, username, subscriberId, subscriptionId, subscriptionType, path);
 		this.randomizer = randomizer;
 		this.state = state;
     }
 
-	public SubscriptionData(String username, String subscriberId,
+	public SubscriptionData(String siteId, String username, String subscriberId,
 			String subscriptionId, String subscriptionType, String path, DataCreationState state)
     {
-		this(null, username, subscriberId, subscriptionId, subscriptionType, path);
+		this(null, siteId, username, subscriberId, subscriptionId, subscriptionType, path);
 		this.state = state;
     }
 
-	public SubscriptionData(String username, String subscriberId, String subscriptionType, String path, DataCreationState state)
+	public SubscriptionData(String siteId, String username, String subscriberId, String subscriptionType,
+			String path, DataCreationState state)
     {
 	    super();
+	    this.siteId = siteId;
 	    this.randomizer = (int)(Math.random() * 1E6);
 	    this.username = username;
 	    this.subscriberId = subscriberId;
@@ -59,12 +75,13 @@ public class SubscriptionData
 	    this.state = state;
     }
 
-	public SubscriptionData(ObjectId objectId, String username, String subscriberId,
-			String subscriptionId,  String subscriptionType, String path)
+	public SubscriptionData(ObjectId objectId, String siteId, String username, String subscriberId,
+			String subscriptionId, String subscriptionType, String path)
     {
 	    super();
 	    this.randomizer = (int)(Math.random() * 1E6);
 	    this.objectId = objectId;
+	    this.siteId = siteId;
 	    this.username = username;
 	    this.subscriberId = subscriberId;
 	    this.subscriptionId = subscriptionId;
@@ -74,10 +91,15 @@ public class SubscriptionData
 
 	public SubscriptionData addSubscription(Subscription subscription)
 	{
-		SubscriptionData subscriptionData = new SubscriptionData(objectId, username, subscriberId,
+		SubscriptionData subscriptionData = new SubscriptionData(objectId, siteId, username, subscriberId,
 				subscription.getId(), subscriptionType, path);
 		subscriptionData.randomizer = randomizer;
 		return subscriptionData;
+	}
+
+	public String getSiteId()
+	{
+		return siteId;
 	}
 
 	public DataCreationState getState()
@@ -125,6 +147,7 @@ public class SubscriptionData
         		.add(FIELD_SUBSCRIBER_ID, getSubscriberId())
         		.add(FIELD_SUBSCRIPTION_TYPE, getSubscriptionType())
         		.add(FIELD_PATH, getPath())
+        		.add(FIELD_SITE_ID, getSiteId())
         		.add(FIELD_RANDOMIZER, getRandomizer());
     	if(getSubscriptionId() != null)
     	{
@@ -143,14 +166,25 @@ public class SubscriptionData
     	ObjectId id = (ObjectId)dbObject.get("_id");
     	String username = (String)dbObject.get(FIELD_USERNAME);
     	String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
+    	String siteId = (String)dbObject.get(FIELD_SITE_ID);
     	String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
     	int randomizer = (Integer)dbObject.get(FIELD_RANDOMIZER);
     	String stateStr = (String)dbObject.get(FIELD_STATE);
     	DataCreationState state = (stateStr != null ? DataCreationState.valueOf(stateStr) : null);
     	String subscriptionType = (String)dbObject.get(FIELD_SUBSCRIPTION_TYPE);
     	String path = (String)dbObject.get(FIELD_PATH);
-    	SubscriptionData subscriptionData = new SubscriptionData(id, username, subscriberId, subscriptionId,
+    	SubscriptionData subscriptionData = new SubscriptionData(id, siteId, username, subscriberId, subscriptionId,
     			subscriptionType, path, state, randomizer);
     	return subscriptionData;
+    }
+
+	@Override
+    public String toString()
+    {
+	    return "SubscriptionData [objectId=" + objectId + ", siteId=" + siteId
+	            + ", randomizer=" + randomizer + ", username=" + username
+	            + ", subscriberId=" + subscriberId + ", subscriptionId="
+	            + subscriptionId + ", subscriptionType=" + subscriptionType
+	            + ", path=" + path + ", state=" + state + "]";
     }
 }

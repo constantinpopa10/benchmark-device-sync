@@ -70,11 +70,15 @@ public class CreateSubscription extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
         try
         {
         	DBObject dbObject = (DBObject)event.getData();
         	String username = null;
         	String subscriberId = null;
+        	String siteId = null;
+    		String targetPath = null;
 
         	if(dbObject != null)
         	{
@@ -82,6 +86,7 @@ public class CreateSubscription extends AbstractEventProcessor
             			.fromDBObject(dbObject);
             	username = subscriptionData.getUsername();
             	subscriberId = subscriptionData.getSubscriberId();
+            	siteId = subscriptionData.getSiteId();
         	}
         	else
         	{
@@ -91,15 +96,25 @@ public class CreateSubscription extends AbstractEventProcessor
         	}
 
     		Alfresco alfresco = getAlfresco(username);
-    		SiteData siteData = siteDataService.randomSite("default", DataCreationState.Created);
-    		String targetPath = siteData.getPath();
+
+    		if(siteId == null)
+    		{
+	    		SiteData siteData = siteDataService.randomSite("default", DataCreationState.Created);
+	    		siteId = siteData.getSiteId();
+	    		targetPath = siteData.getPath();
+    		}
+
     		if(targetPath == null || targetPath.equals(""))
     		{
-    			targetPath = "/Company Home/Sites/" + siteData.getSiteId() + "/documentLibrary";
+    			targetPath = "/Company Home/Sites/" + siteId + "/documentLibrary";
     		}
+
+        	super.resumeTimer();
     		Subscription subscription = alfresco.createSubscription("-default-", subscriberId, SubscriptionType.BOTH,
     				targetPath);
-        	subscriptionsService.addSubscription(username, subscriberId, subscription.getId(), SubscriptionType.BOTH.toString(),
+        	super.suspendTimer();
+        	subscriptionsService.addSubscription(siteId, username, subscriberId, subscription.getId(), 
+        			SubscriptionType.BOTH.toString(),
         			targetPath, DataCreationState.Created);
 
             List<Event> nextEvents = new LinkedList<>();

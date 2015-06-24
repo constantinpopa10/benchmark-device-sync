@@ -55,6 +55,8 @@ public class DeleteSubscription extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
         try
         {
         	String username = (String)event.getData();
@@ -64,7 +66,10 @@ public class DeleteSubscription extends AbstractEventProcessor
 
     		Alfresco alfresco = getAlfresco(username);
 
+        	super.resumeTimer();
     		alfresco.removeSubscription("-default-", subscriberId, subscriptionId);
+        	super.suspendTimer();
+
         	subscriptionsService.removeSubscription(subscriptionId);
 
             List<Event> nextEvents = new LinkedList<>();

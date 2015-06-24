@@ -3,18 +3,22 @@ package org.alfresco.bm.devicesync.eventprocessor;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscribersService;
 import org.alfresco.bm.devicesync.data.SubscriberData;
 import org.alfresco.bm.devicesync.data.SubscriptionBatchData;
 import org.alfresco.bm.devicesync.data.SubscriptionData;
+import org.alfresco.bm.devicesync.util.SiteSampleSelector;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
+import org.alfresco.bm.site.SiteDataService;
+import org.alfresco.bm.site.SiteMemberData;
+import org.alfresco.bm.site.SiteRole;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.mongodb.DBObject;
-
 
 /**
  * 
@@ -26,7 +30,9 @@ public class SubscriptionsBatch extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(SubscriptionsBatch.class);
 
+    private SiteDataService siteDataService;
     private final SubscribersService subscribersDataService;
+    private final SiteSampleSelector siteSampleSelector;
 
     private final String eventNameCreateSubscription;
 
@@ -43,19 +49,25 @@ public class SubscriptionsBatch extends AbstractEventProcessor
      * @param numberOfClients_p             Number of clients to create
      * @param nextEventId_p                 ID of the next event
      */
-    public SubscriptionsBatch(SubscribersService subscribersDataService, int batchSize, int numBatches,
+    public SubscriptionsBatch(SubscribersService subscribersDataService, SiteSampleSelector siteSampleSelector,
+    		SiteDataService siteDataService,
+    		int batchSize, int numBatches,
     		int waitTimeBetweenBatches, String eventNameCreateSubscription)
     {
     	this.subscribersDataService = subscribersDataService;
+    	this.siteDataService = siteDataService;
+    	this.siteSampleSelector = siteSampleSelector;
     	this.eventNameCreateSubscription = eventNameCreateSubscription;
     	this.batchSize = batchSize;
     	this.numBatches = numBatches;
-    	this.waitTimeBetweenBatches = waitTimeBetweenBatches; 
+    	this.waitTimeBetweenBatches = waitTimeBetweenBatches;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
     	DBObject dbObject = (DBObject)event.getData();
     	SubscriptionBatchData subscriptionBatchData = SubscriptionBatchData.fromDBObject(dbObject);
     	Integer batchSizeParameter = subscriptionBatchData.getBatchSize();
@@ -69,6 +81,7 @@ public class SubscriptionsBatch extends AbstractEventProcessor
     			waitTimeBetweenBatchesParameter.intValue() : this.waitTimeBetweenBatches;
     	int count = subscriptionBatchData.getCount();
     	String nextEventName = subscriptionBatchData.getNextEventName();
+    	List<String> sites = subscriptionBatchData.getSites();
 
         try
         {
@@ -93,10 +106,21 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 	        	{
 	            	for(int i = 0; i < batchSize; i++)
 	            	{
+//	            		String siteId = siteSampleSelector.getSite();
+
+	            		// for a random subscriber...
 	            		SubscriberData subscriberData = subscribersDataService.getRandomSubscriber(null);
-	            		String username = subscriberData.getUsername();
 	            		String subscriberId = subscriberData.getSubscriberId();
-	            		SubscriptionData subscriptionData = new SubscriptionData(username, subscriberId);
+	            		String username = subscriberData.getUsername();
+
+	            		// find a site to which they can write content
+	            		SiteMemberData siteMemberData = siteDataService.randomSiteMember(null,
+	            				DataCreationState.Created, username,
+	            				SiteRole.SiteManager.toString(), SiteRole.SiteCollaborator.toString(),
+	            				SiteRole.SiteContributor.toString());
+	            		String siteId = siteMemberData.getSiteId();
+
+	            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
 	                	Event nextEvent = new Event(eventNameCreateSubscription, System.currentTimeMillis(),
 	                			subscriptionData.toDBObject());
 	                	nextEvents.add(nextEvent);
@@ -106,7 +130,8 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 	        	{
 	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
 	            	SubscriptionBatchData newSubscriptionBatchData = new SubscriptionBatchData(count + 1,
-	            			batchSizeParameter, numBatchesParameter, waitTimeBetweenBatchesParameter, nextEventName);
+	            			batchSizeParameter, numBatchesParameter, waitTimeBetweenBatchesParameter, nextEventName,
+	            			sites);
 	            	Event nextEvent = new Event(event.getName(), scheduledTime, newSubscriptionBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
 	        	}

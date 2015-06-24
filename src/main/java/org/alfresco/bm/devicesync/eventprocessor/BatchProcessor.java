@@ -7,6 +7,7 @@ import org.alfresco.bm.devicesync.data.CollectStatsBatchData;
 import org.alfresco.bm.devicesync.data.SubscriberBatchData;
 import org.alfresco.bm.devicesync.data.SubscriptionBatchData;
 import org.alfresco.bm.devicesync.data.SyncBatchData;
+import org.alfresco.bm.devicesync.data.UploadFileBatchData;
 import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
@@ -28,6 +29,7 @@ public class BatchProcessor extends AbstractEventProcessor
     private final String eventNameSubscriptionsBatch;
     private final String eventNameSyncBatch;
     private final String eventNameCollectStatsBatch;
+    private final String eventNameUploadFileBatch;
 
     /**
      * Constructor 
@@ -38,13 +40,14 @@ public class BatchProcessor extends AbstractEventProcessor
      * @param numberOfClients_p             Number of clients to create
      * @param nextEventId_p                 ID of the next event
      */
-    public BatchProcessor(String eventNameSubscribersBatch, String eventNameSubscriptionsBatch, String eventNameSyncBatch,
-    		String eventNameCollectStatsBatch)
+    public BatchProcessor(String eventNameSubscribersBatch, String eventNameSubscriptionsBatch,
+    		String eventNameSyncBatch, String eventNameCollectStatsBatch, String eventNameUploadFileBatch)
     {
     	this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.eventNameSubscriptionsBatch = eventNameSubscriptionsBatch;
         this.eventNameSyncBatch = eventNameSyncBatch;
         this.eventNameCollectStatsBatch = eventNameCollectStatsBatch;
+        this.eventNameUploadFileBatch = eventNameUploadFileBatch;
 
         // validate arguments
         Util.checkArgumentNotNull(eventNameSubscribersBatch, "eventNameSubscribersBatch");
@@ -77,6 +80,12 @@ public class BatchProcessor extends AbstractEventProcessor
             {
 	            SyncBatchData data = new SyncBatchData(0);
 	            Event nextEvent = new Event(eventNameSyncBatch, time, data.toDBObject());
+	            nextEvents.add(nextEvent);
+            }
+
+            {
+	            UploadFileBatchData data = new UploadFileBatchData(0);
+	            Event nextEvent = new Event(eventNameUploadFileBatch, time, data.toDBObject());
 	            nextEvents.add(nextEvent);
             }
 

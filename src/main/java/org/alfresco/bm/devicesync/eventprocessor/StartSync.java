@@ -69,13 +69,14 @@ public class StartSync extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
     	DBObject dbObject = (DBObject)event.getData();
     	SyncData syncData = SyncData.fromDBObject(dbObject);
 
         try
         {
             List<Event> nextEvents = new LinkedList<Event>();
-            String msg = null;
 
         	Long endTime = syncData.getEndTime();
         	if(endTime == null || System.currentTimeMillis() <= endTime)
@@ -88,30 +89,27 @@ public class StartSync extends AbstractEventProcessor
 	    	    Alfresco alfresco = getAlfresco(username);
 
 				StartSyncRequest req = new StartSyncRequest(Collections.emptyList());
+		    	super.resumeTimer();
 				StartSyncResponse response = alfresco.startSync(req, "-default-", subscriberId, subscriptionId);
+		    	super.suspendTimer();
 				String syncId = response.getSyncId();
 
 				logger.debug("response = " + response);
 
 	            // create same event again - delay to next event
 				long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
-				syncData = new SyncData(syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), syncId, endTime);
+				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
+						syncData.getSubscriptionId(), syncId, -1, -1, false, endTime, "Started sync " + syncId);
 	            Event nextEvent = new Event("getSync", scheduledTime, syncData.toDBObject());
 	        	nextEvents.add(nextEvent);
-	            msg = "Started sync " + syncId;
         	}
         	else
         	{
-        		msg = "End time reached";
+				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
+						syncData.getSubscriptionId(), null, -1, -1, false, endTime, "Start sync end time reached");
         	}
 
-            if (logger.isDebugEnabled())
-            {
-                logger.debug(msg);
-            }
-
-            return new EventResult(msg, nextEvents);
+            return new EventResult(syncData.toDBObject(), nextEvents);
         }
         catch (Exception e)
         {

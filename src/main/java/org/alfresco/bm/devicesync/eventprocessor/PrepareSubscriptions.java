@@ -113,7 +113,7 @@ public class PrepareSubscriptions extends AbstractEventProcessor
             	int batchSize = 20;
             	int numBatches = (int)count/batchSize; // TODO
             	SubscriptionBatchData subscriptionBatchData = new SubscriptionBatchData(0, batchSize, numBatches, null,
-            			nextEventName);
+            			nextEventName, null);
             	Event newEvent = new Event(eventNameSubscriptionsBatch, subscriptionBatchData.toDBObject());
             	nextEvents.add(newEvent);
 

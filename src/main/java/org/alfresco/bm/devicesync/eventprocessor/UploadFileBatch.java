@@ -6,8 +6,7 @@ import java.util.List;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.SubscriptionData;
-import org.alfresco.bm.devicesync.data.SyncBatchData;
-import org.alfresco.bm.devicesync.data.SyncData;
+import org.alfresco.bm.devicesync.data.UploadFileBatchData;
 import org.alfresco.bm.devicesync.util.SiteSampleSelector;
 import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
@@ -28,20 +27,19 @@ import com.mongodb.DBObject;
  * @author sglover
  * @since 1.0
  */
-public class SyncBatch extends AbstractEventProcessor
+public class UploadFileBatch extends AbstractEventProcessor
 {
     /** Logger for the class */
-    private static Log logger = LogFactory.getLog(SyncBatch.class);
+    private static Log logger = LogFactory.getLog(UploadFileBatch.class);
 
     private SubscriptionsService subscriptionsService;
+    private final SiteSampleSelector siteSampleSelector;
 
     private final int batchSize;
     private final int numBatches;
     private final int waitTimeBetweenBatches; // ms
 
-    private final SiteSampleSelector siteSampleSelector;
-
-    private final String eventNameStartSync;
+    private final String eventNameUploadFile;
 
     /**
      * Constructor 
@@ -52,14 +50,15 @@ public class SyncBatch extends AbstractEventProcessor
      * @param numberOfClients_p             Number of clients to create
      * @param nextEventId_p                 ID of the next event
      */
-    public SyncBatch(SubscriptionsService subscriptionsService, SiteSampleSelector siteSampleSelector,
-    		int batchSize, int numBatches, int waitTimeBetweenBatches, String eventNameStartSync)
+    public UploadFileBatch(SiteSampleSelector siteSampleSelector, SubscriptionsService subscriptionsService,
+    		int batchSize, int numBatches,
+    		int waitTimeBetweenBatches, String eventNameUploadFile)
     {
-    	this.subscriptionsService = subscriptionsService;
     	this.siteSampleSelector = siteSampleSelector;
+    	this.subscriptionsService = subscriptionsService;
     	this.batchSize = batchSize;
         this.numBatches = numBatches;
-        this.eventNameStartSync = eventNameStartSync;
+        this.eventNameUploadFile = eventNameUploadFile;
         this.waitTimeBetweenBatches = waitTimeBetweenBatches;
 
         // validate arguments
@@ -71,9 +70,8 @@ public class SyncBatch extends AbstractEventProcessor
     protected EventResult processEvent(Event event) throws Exception
     {
     	DBObject dbObject = (DBObject)event.getData();
-    	SyncBatchData syncBatchData = SyncBatchData.fromDBObject(dbObject);
-    	int count = syncBatchData.getCount();
-    	List<String> sites = syncBatchData.getSites();
+    	UploadFileBatchData uploadFileBatchData = UploadFileBatchData.fromDBObject(dbObject);
+    	int count = uploadFileBatchData.getCount();
 
         try
         {
@@ -95,21 +93,16 @@ public class SyncBatch extends AbstractEventProcessor
 	            	for(int i = 0; i < batchSize; i++)
 	            	{
 	            		SubscriptionData subscriptionData = siteSampleSelector.getSubscription();
-
-	            		SyncData syncData = new SyncData(subscriptionData.getSiteId(),
-	            				subscriptionData.getUsername(),
-	            				subscriptionData.getSubscriberId(),
-	            				subscriptionData.getSubscriptionId(), null);
-	
-	                	Event nextEvent = new Event(eventNameStartSync, System.currentTimeMillis(), syncData.toDBObject());
+	                	Event nextEvent = new Event(eventNameUploadFile, System.currentTimeMillis(),
+	                			subscriptionData.toDBObject());
 	                	nextEvents.add(nextEvent);
 	            	}
             	}
 
             	{
 	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
-	            	SyncBatchData newSyncBatchData = new SyncBatchData(count + 1, sites);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newSyncBatchData.toDBObject());
+	            	UploadFileBatchData newUploadFileBatchData = new UploadFileBatchData(count + 1);
+	            	Event nextEvent = new Event(event.getName(), scheduledTime, newUploadFileBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
             	}
 

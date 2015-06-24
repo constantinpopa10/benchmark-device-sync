@@ -1,12 +1,15 @@
 package org.alfresco.bm.devicesync.dao.mongo;
 
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_RANDOMIZER;
+import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SITE_ID;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_STATE;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SUBSCRIPTION_ID;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_USERNAME;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
@@ -70,6 +73,17 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
                 .add("unique", Boolean.FALSE)
                 .get();
         collection.createIndex(idxState, optState);
+
+        DBObject idxSiteId = BasicDBObjectBuilder
+                .start(FIELD_STATE, 1)
+                .add(FIELD_SITE_ID, 2)
+                .add(FIELD_RANDOMIZER, 3)
+                .get();
+        DBObject optSiteId = BasicDBObjectBuilder
+                .start("name", "idxSiteId")
+                .add("unique", Boolean.FALSE)
+                .get();
+        collection.createIndex(idxSiteId, optSiteId);
 
         DBObject idxDomainRand = BasicDBObjectBuilder
                 .start(FIELD_RANDOMIZER, 1)
@@ -153,21 +167,21 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
 //    }
 
 	@Override
-    public void addSubscription(String username, String subscriberId,
+    public void addSubscription(String siteId, String username, String subscriberId,
             String subscriptionId, String subscriptionType, String path,
             DataCreationState state)
     {
-    	SubscriptionData subscriptionData = new SubscriptionData(username, subscriberId, subscriptionId,
+    	SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId, subscriptionId,
     			subscriptionType, path, state);
     	DBObject insert = subscriptionData.toDBObject();
     	collection.insert(insert);
     }
 
     @Override
-    public void addSubscription(String username, String subscriberId, String subscriptionType, String path,
+    public void addSubscription(String siteId, String username, String subscriberId, String subscriptionType, String path,
     		DataCreationState state)
     {
-    	SubscriptionData subscriptionData = new SubscriptionData(username, subscriberId, subscriptionType, path,
+    	SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId, subscriptionType, path,
     			state);
     	DBObject insert = subscriptionData.toDBObject();
     	collection.insert(insert);
@@ -180,7 +194,7 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
 
     	DBObject query = QueryBuilder
     			.start(FIELD_SUBSCRIPTION_ID).is(subscriptionId)
-    			.and(FIELD_STATE).is(DataCreationState.Created)
+    			.and(FIELD_STATE).is(DataCreationState.Created.toString())
     			.get();
     	DBObject dbObject = collection.findOne(query);
     	if(dbObject != null)
@@ -239,6 +253,31 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
     }
 
     @Override
+    public SubscriptionData getRandomSubscriptionInSite(String siteId)
+    {
+        int random = (int) (Math.random() * (double) 1e6);
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
+                .add(FIELD_STATE, DataCreationState.Created.toString());
+        if(siteId != null)
+        {
+        	builder.add(FIELD_SITE_ID, siteId);
+        }
+        builder.push(FIELD_RANDOMIZER)
+        	.add("$gte", Integer.valueOf(random))
+        	.pop();
+        DBObject queryObj = builder.get();
+
+        DBObject dbObject = collection.findOne(queryObj);
+        if(dbObject == null)
+        {
+            queryObj.put(FIELD_RANDOMIZER, new BasicDBObject("$lt", random));
+            dbObject = collection.findOne(queryObj);
+        }
+
+        return SubscriptionData.fromDBObject(dbObject);
+    }
+
+    @Override
     public SubscriptionData getRandomSubscription(String username)
     {
         int random = (int) (Math.random() * (double) 1e6);
@@ -261,6 +300,53 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
         }
 
         return SubscriptionData.fromDBObject(dbObject);
+    }
+
+    @Override
+    public Stream<SubscriptionData> getRandomSubscriptions(String username, int limit)
+    {
+        int random = (int) (Math.random() * (double) 1e6);
+
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
+                .add(FIELD_STATE, DataCreationState.Created.toString())
+                .push(FIELD_RANDOMIZER)
+                    .add("$gte", Integer.valueOf(random))
+                .pop();
+        if(username != null)
+        {
+        	builder.add(FIELD_USERNAME, username);
+        }
+        DBObject queryObj = builder.get();
+        DBObject orderBy = BasicDBObjectBuilder
+        		.start(FIELD_RANDOMIZER, 1)
+        		.get();
+        long count = collection.count(queryObj);
+        if(limit > 0 && count < limit)
+        {
+            BasicDBObjectBuilder builder1 = BasicDBObjectBuilder.start()
+                    .push(FIELD_RANDOMIZER)
+                    	.add("$lte", Integer.valueOf(random))
+                    .pop();
+            if(username != null)
+            {
+            	builder.add(FIELD_USERNAME, username);
+            }
+            queryObj = builder1.get();
+            count = collection.count(queryObj);
+            if(limit > 0 && count < limit)
+            {
+            	throw new RuntimeException("Not enough subscriptions for limit " + limit);
+            }
+            orderBy = BasicDBObjectBuilder
+            		.start(FIELD_RANDOMIZER, -1)
+            		.get();
+        }
+
+    	DBCursor cur = collection.find(queryObj).sort(orderBy);
+    	Stream<SubscriptionData> stream = StreamSupport.stream(cur.spliterator(), false)
+    		.onClose(() -> cur.close())
+    		.map(dbo -> SubscriptionData.fromDBObject(dbo)); // need to close cursor;
+    	return stream;
     }
 
 	@Override

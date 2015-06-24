@@ -24,20 +24,22 @@ import com.mongodb.WriteConcern;
  */
 public class MongoSyncsService implements SyncsService, InitializingBean
 {
-	public static String FIELD_SYNC_ID = "syncId";
-	public static String FIELD_USERNAME = "username";
-	public static String FIELD_RANDOMIZER = "randomizer";
-	public static String FIELD_SUBSCRIBER_ID = "subscriberId";
-	public static String FIELD_SUBSCRIPTION_ID = "subscriptionId";
-	public static String FIELD_SUBSCRIPTION_TYPE = "subscriptionType";
-	public static String FIELD_PATH = "path";
-	public static String FIELD_STATE = "state";
-	public static String FIELD_MESSAGE = "message";
-	public static String FIELD_MAX_RETRIES_HIT = "maxRetriesHit";
-	public static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
-	public static String FIELD_NUM_RETRIES = "numRetries";
-	public static String FIELD_END_TIME = "endTime";
-	public static String FIELD_COUNT = "count";
+	private static String FIELD_SITE_ID = "siteId";
+	private static String FIELD_SYNC_ID = "syncId";
+	private static String FIELD_USERNAME = "username";
+	private static String FIELD_RANDOMIZER = "randomizer";
+	private static String FIELD_SUBSCRIBER_ID = "subscriberId";
+	private static String FIELD_SUBSCRIPTION_ID = "subscriptionId";
+	private static String FIELD_SUBSCRIPTION_TYPE = "subscriptionType";
+	private static String FIELD_PATH = "path";
+	private static String FIELD_STATE = "state";
+	private static String FIELD_MESSAGE = "message";
+	private static String FIELD_MAX_RETRIES_HIT = "maxRetriesHit";
+	private static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
+	private static String FIELD_MSG = "msg";
+	private static String FIELD_NUM_RETRIES = "numRetries";
+	private static String FIELD_END_TIME = "endTime";
+	private static String FIELD_COUNT = "count";
 
     /** The collection of users, which can be reused by derived extensions. */
     protected final DBCollection collection;
@@ -100,11 +102,13 @@ public class MongoSyncsService implements SyncsService, InitializingBean
     	for(DBObject dbObject : cursor)
     	{
     		ObjectId objectId = (ObjectId)dbObject.get("_id");
+    		String siteId = (String)dbObject.get(FIELD_SITE_ID);
     		String syncId = (String)dbObject.get(FIELD_SYNC_ID);
     		String username = (String)dbObject.get(FIELD_USERNAME);
     		String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
     		String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
-    		SyncData subscription = new SyncData(objectId, username, subscriberId, subscriptionId, syncId);
+    		SyncData subscription = new SyncData(objectId, siteId, username, subscriberId, subscriptionId, syncId,
+    				-1, -1, false, null, null);
     		syncs.add(subscription);
     	}
 

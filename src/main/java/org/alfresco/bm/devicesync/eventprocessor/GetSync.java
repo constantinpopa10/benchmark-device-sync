@@ -100,34 +100,31 @@ public class GetSync extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
     	DBObject dbObject = (DBObject)event.getData();
     	SyncData syncData = SyncData.fromDBObject(dbObject);
 
         try
         {
             String username = syncData.getUsername();
-    		String syncId = syncData.getSyncId();
     	    Alfresco alfresco = getAlfresco(username);
 
             List<Event> nextEvents = new LinkedList<Event>();
 
+        	super.resumeTimer();
 			getSync(0, alfresco, syncData);
+	    	super.suspendTimer();
 
 			long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
             Event nextEvent = new Event("endSync", scheduledTime, syncData.toDBObject());
         	nextEvents.add(nextEvent);
-			String msg = "Get sync " + syncId;
 
-            if (logger.isDebugEnabled())
-            {
-                logger.debug(msg);
-            }
-
-            return new EventResult(msg, nextEvents);
+            return new EventResult(syncData.toDBObject(), nextEvents);
         }
         catch (Exception e)
         {
-            logger.error("Exception occurred during event processing: Terminate desktop sync client", e);
+            logger.error("Exception occurred during event processing", e);
             throw e;
         }
     }

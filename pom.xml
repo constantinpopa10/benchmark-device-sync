@@ -26,27 +26,34 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.chemistry.opencmis</groupId>
+            <artifactId>chemistry-opencmis-client-api</artifactId>
+            <version>0.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.chemistry.opencmis</groupId>
+            <artifactId>chemistry-opencmis-client-impl</artifactId>
+            <version>0.11.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.alfresco</groupId>
             <artifactId>alfresco-benchmark-server</artifactId>
             <version>${server.version}</version>
             <classifier>classes</classifier>
         </dependency>
-        <!-- 
         <dependency>
             <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-benchmark-tests-ent-signup</artifactId>
-            <version>2.0</version>
-            <type>war</type>
-            <scope>test</scope>
+            <artifactId>alfresco-repomirror</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>
+            			chemistry-opencmis-client-api
+            		</artifactId>
+            		<groupId>org.apache.chemistry.opencmis</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-benchmark-tests-dataload</artifactId>
-            <version>2.5-SNAPSHOT</version>
-            <type>war</type>
-            <scope>test</scope>
-        </dependency>
-         -->
 		<dependency>
 		    <groupId>org.apache.httpcomponents</groupId>
 		    <artifactId>httpclient</artifactId>
@@ -60,12 +67,15 @@
         <dependency>
             <groupId>org.springframework.social</groupId>
             <artifactId>spring-social-alfresco-bm</artifactId>
-            <version>0.5.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.chemistry.opencmis</groupId>
-            <artifactId>chemistry-opencmis-client-api</artifactId>
-            <version>0.11.0</version>
+            <version>0.5.5</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>
+            			chemistry-opencmis-client-api
+            		</artifactId>
+            		<groupId>org.apache.chemistry.opencmis</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
@@ -100,6 +110,12 @@
                 <exclusion>
                 	<artifactId>alfresco-benchmark-server</artifactId>
                 	<groupId>org.alfresco</groupId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>
+                		chemistry-opencmis-client-api
+                	</artifactId>
+                	<groupId>org.apache.chemistry.opencmis</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

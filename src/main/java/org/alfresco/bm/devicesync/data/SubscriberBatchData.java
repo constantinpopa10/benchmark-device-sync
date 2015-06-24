@@ -1,7 +1,5 @@
 package org.alfresco.bm.devicesync.data;
 
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_COUNT;
-
 import java.io.Serializable;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -16,6 +14,7 @@ public class SubscriberBatchData implements Serializable
 {
 	private static final long serialVersionUID = 946578159221599841L;
 
+	public static final String FIELD_COUNT = "count";
 	public static final String FIELD_NEXT_EVENT_NAME = "nextEventName";
 	public static final String FIELD_BATCH_SIZE = "batchSize";
 	public static final String FIELD_NUM_BATCHES = "numBatches";

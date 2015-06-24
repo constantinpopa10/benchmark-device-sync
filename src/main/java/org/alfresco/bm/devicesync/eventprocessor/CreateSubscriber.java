@@ -65,6 +65,8 @@ public class CreateSubscriber extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
+    	super.suspendTimer();
+
         try
         {
         	DBObject dbObject = (DBObject)event.getData();
@@ -84,7 +86,9 @@ public class CreateSubscriber extends AbstractEventProcessor
 
     		Alfresco alfresco = getAlfresco(username);
 
+        	super.resumeTimer();
     		Subscriber subscriber = alfresco.createSubscriber("-default-", "test");
+        	super.suspendTimer();
         	subscribersService.addSubscriber(username, subscriber.getId(), DataCreationState.Created);
 
             List<Event> nextEvents = new LinkedList<>();

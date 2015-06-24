@@ -1,6 +1,6 @@
 package org.alfresco.bm.devicesync.data;
 
-import static org.alfresco.bm.devicesync.dao.mongo.MongoSyncsService.FIELD_COUNT;
+import static org.alfresco.bm.devicesync.data.SyncData.FIELD_COUNT;
 
 import java.io.Serializable;
 
