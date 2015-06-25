@@ -146,6 +146,12 @@
         <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
     </bean>
 
+    <bean id="downloadFileHelper" class="org.alfresco.bm.devicesync.util.DownloadFileHelper">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
+        <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
+    </bean>
+
      <!-- API factories -->
 
     <bean id="publicApiFactory" class="org.alfresco.bm.devicesync.util.BasicAuthPublicApiFactory">
@@ -291,6 +297,8 @@
         <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
         <constructor-arg name="waitTimeMillisBeforeSyncOps" value="${sync.waitTimeMillisBeforeSyncOps}" />
         <constructor-arg name="maxTries" value="${sync.getSync.maxTries}" />
+        <constructor-arg name="timeBetweenGetFiles" value="${getSync.timeBetweenGetFiles}" />
+        <constructor-arg name="getFilesEnabled" value="${getSync.getFilesEnabled}"></constructor-arg>
     </bean>
 
     <bean id="event.endSync" class="org.alfresco.bm.devicesync.eventprocessor.EndSync" parent="event.base">
@@ -320,5 +328,12 @@
         <constructor-arg name="eventNameUploadFile" value="uploadFileForSubscription" />
         <property name="chart" value="false" />
     </bean>
+
+    <bean id="event.getFile" class="org.alfresco.bm.devicesync.eventprocessor.GetFile" parent="event.base">
+        <constructor-arg name="downloadFileHelper" ref="downloadFileHelper" />
+    </bean>
+
+    <bean id="event.fileDownloaded" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="event.base"/>
+    <bean id="event.fileUploaded" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="event.base"/>
 
 </beans>

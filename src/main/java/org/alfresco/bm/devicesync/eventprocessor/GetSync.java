@@ -9,6 +9,8 @@ import org.alfresco.bm.devicesync.util.PublicApiFactory;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
+import org.alfresco.service.synchronization.api.Change;
+import org.alfresco.service.synchronization.api.ChangeType;
 import org.alfresco.service.synchronization.api.GetChangesResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,9 +18,8 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.springframework.social.alfresco.api.Alfresco;
 
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
-
-
 
 /**
  * Execution of desktop sync client.
@@ -36,6 +37,8 @@ public class GetSync extends AbstractEventProcessor
     private PublicApiFactory publicApiFactory;
     private int waitTimeMillisBeforeSyncOps;
     private int maxTries;
+    private int timeBetweenGetFiles;
+    private boolean getFilesEnabled;
 
     /**
      * Constructor
@@ -49,11 +52,14 @@ public class GetSync extends AbstractEventProcessor
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public GetSync(PublicApiFactory publicApiFactory, int waitTimeMillisBeforeSyncOps, int maxTries)
+    public GetSync(PublicApiFactory publicApiFactory, int waitTimeMillisBeforeSyncOps, int maxTries, int timeBetweenGetFiles,
+    		boolean getFilesEnabled)
     {
     	this.publicApiFactory = publicApiFactory;
     	this.waitTimeMillisBeforeSyncOps = waitTimeMillisBeforeSyncOps;
     	this.maxTries = maxTries;
+    	this.timeBetweenGetFiles = timeBetweenGetFiles;
+    	this.getFilesEnabled = getFilesEnabled;
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'get sync'.");
@@ -115,6 +121,26 @@ public class GetSync extends AbstractEventProcessor
         	super.resumeTimer();
 			getSync(0, alfresco, syncData);
 	    	super.suspendTimer();
+
+	    	int numSyncChanges = syncData.getNumSyncChanges();
+	    	if(getFilesEnabled && numSyncChanges > 0)
+	    	{
+	    		for(Change change: syncData.getChanges())
+	    		{
+	    			ChangeType changeType = change.getType();
+	    			if(changeType.equals(ChangeType.CREATE_REPOS) || changeType.equals(ChangeType.UPDATE_REPOS))
+	    			{
+	    				String path = change.getPath();
+	    				DBObject getFileParameter = BasicDBObjectBuilder
+		    				.start("path", path)
+		    				.add("username", username)
+		    				.get();
+	    				long scheduledTime = System.currentTimeMillis() + timeBetweenGetFiles;
+	    	            Event nextEvent = new Event("getFile", scheduledTime, getFileParameter);
+	    	        	nextEvents.add(nextEvent);
+	    			}
+	    		}
+	    	}
 
 			long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
             Event nextEvent = new Event("endSync", scheduledTime, syncData.toDBObject());

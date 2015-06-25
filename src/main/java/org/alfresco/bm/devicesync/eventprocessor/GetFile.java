@@ -18,12 +18,9 @@
  */
 package org.alfresco.bm.devicesync.eventprocessor;
 
-import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.CMISEventData;
-import org.alfresco.bm.devicesync.data.SubscriptionData;
+import org.alfresco.bm.devicesync.util.DownloadFileHelper;
 import org.alfresco.bm.devicesync.util.UploadFileException;
-import org.alfresco.bm.devicesync.util.UploadFileHelper;
-import org.alfresco.bm.devicesync.util.UploadFileHelper.UploadListener;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 
@@ -48,31 +45,29 @@ import com.mongodb.DBObject;
  * @author sglover
  * @since 1.0
  */
-public class UploadFileForSubscription extends AbstractCMISEventProcessor
+public class GetFile extends AbstractCMISEventProcessor
 {
-    public static final String EVENT_NAME_FILE_UPLOADED = "fileUploaded";
+    public static final String EVENT_NAME_FILE_DOWNLOADED = "fileDownloaded";
 
-    private final SubscriptionsService subscriptionsService;
-    private String eventNameFileUploaded;
-    private final UploadFileHelper uploadFileHelper;
+    private String eventNameFileDownloaded;
+    private final DownloadFileHelper downloadFileHelper;
 
     /**
      * @param testFileService               service to provide sample files for upload
      */
-    public UploadFileForSubscription(SubscriptionsService subscriptionsService, UploadFileHelper uploadFileHelper)
+    public GetFile(DownloadFileHelper downloadFileHelper)
     {
         super();
-        this.subscriptionsService = subscriptionsService;
-        this.uploadFileHelper = uploadFileHelper;
-        this.eventNameFileUploaded = EVENT_NAME_FILE_UPLOADED;
+        this.downloadFileHelper = downloadFileHelper;
+        this.eventNameFileDownloaded = EVENT_NAME_FILE_DOWNLOADED;
     }
 
     /**
      * Override the {@link #EVENT_NAME_FILE_UPLOADED default} event name for 'file uploaded'.
      */
-    public void setEventNameFileUploaded(String eventNameFileUploaded)
+    public void setEventNameFileDownloaded(String eventNameFileDownloaded)
     {
-        this.eventNameFileUploaded = eventNameFileUploaded;
+        this.eventNameFileDownloaded = eventNameFileDownloaded;
     }
 
     @Override
@@ -81,39 +76,22 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
         super.suspendTimer();                               // Timer control
 
         DBObject dbObject = (DBObject)event.getData();
-        String subscriptionId = (String)dbObject.get("subscriptionId");
-        SubscriptionData subscriptionData = subscriptionsService.getSubscription(subscriptionId);
+        String username = (String)dbObject.get("username");
+        String path = (String)dbObject.get("path");
 
         try
         {
-        	DBObject data = uploadFileHelper.doUpload(subscriptionData, new UploadListener()
-			{
-				@Override
-				public void beforeUpload()
-				{
-		            UploadFileForSubscription.super.resumeTimer();                            // Timer control
-				}
-				
-				@Override
-				public void afterUpload()
-				{
-					UploadFileForSubscription.super.stopTimer();                              // Timer control
-				}
-
-				@Override
-                public void onException(Exception e)
-                {
-					UploadFileForSubscription.super.stopTimer();                              // Timer control
-                }
-			}, super.getName());
+            super.resumeTimer();                               // Timer control
+        	DBObject downloadResult = downloadFileHelper.download(username, path);
+            super.suspendTimer();                               // Timer control
 
             // Done
-            Event doneEvent = new Event(eventNameFileUploaded, data);
+            Event doneEvent = new Event(eventNameFileDownloaded, downloadResult);
             EventResult result = new EventResult(
                     BasicDBObjectBuilder
                         .start()
-                        .append("msg", "Successfully uploaded document.")
-                        .append("document", data)
+                        .append("msg", "Successfully downloaded document.")
+                        .append("result", downloadResult)
                         .get(),
                     doneEvent);
             
@@ -126,11 +104,21 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
             return new EventResult(
             		BasicDBObjectBuilder
                     	.start()
-                    	.append("msg", "Exception uploading document.")
+                    	.append("msg", "Exception downloading document.")
                     	.append("exception", e.getE().getMessage())
                     	.append("document", e.getData())
                     	.get(),
                     false);
+        }
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+            return new EventResult(
+            		BasicDBObjectBuilder
+                	.start()
+                	.append("msg", "Exception downloading document.")
+                	.append("exception", e.getMessage())
+                	.get(), false);
         }
     }
 }

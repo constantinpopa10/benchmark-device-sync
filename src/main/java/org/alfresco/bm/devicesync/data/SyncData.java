@@ -42,6 +42,7 @@ public class SyncData implements Serializable
 	private String syncId;
 	private String result;
 	private String msg;
+	private List<Change> changes;
 
 	public SyncData(String siteId, String username, String subscriberId, String subscriptionId, Long endTime)
     {
@@ -143,6 +144,7 @@ public class SyncData implements Serializable
 
     public void gotResults(List<Change> changes)
     {
+    	this.changes = changes;
     	this.numSyncChanges = changes.size();
     	this.msg = "Get sync " + syncId + " successful";
     }
@@ -158,7 +160,12 @@ public class SyncData implements Serializable
     	numRetries++;
     }
 
-    public static SyncData fromDBObject(DBObject dbObject)
+    public List<Change> getChanges()
+	{
+		return changes;
+	}
+
+	public static SyncData fromDBObject(DBObject dbObject)
     {
     	ObjectId id = (ObjectId)dbObject.get("_id");
     	String username = (String)dbObject.get(FIELD_USERNAME);
