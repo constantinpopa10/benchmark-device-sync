@@ -6,6 +6,7 @@ import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_STATE;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SUBSCRIPTION_ID;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_USERNAME;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -14,6 +15,7 @@ import java.util.stream.StreamSupport;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.SubscriptionData;
+import org.alfresco.bm.user.UserDataServiceImpl.Range;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -93,6 +95,48 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
                 .add("unique", Boolean.FALSE)
                 .get();
         collection.createIndex(idxDomainRand, optDomainRand);
+    }
+
+    private Range getRandomizerRange(List<String> sites)
+    {
+    	QueryBuilder queryObjBuilder = QueryBuilder
+        		.start();
+        if(sites != null && sites.size() > 0)
+        {
+            queryObjBuilder.and("siteId").in(sites);
+        }
+        return getRandomizerRange(queryObjBuilder);
+    }
+
+    private Range getRandomizerRange(QueryBuilder queryObjBuilder)
+    {
+        DBObject queryObj = queryObjBuilder.get();
+
+        DBObject fieldsObj = BasicDBObjectBuilder.start()
+                .add("randomizer", Boolean.TRUE)
+                .get();
+        
+        DBObject sortObj = BasicDBObjectBuilder.start()
+                .add("randomizer", -1)
+                .get();
+        
+        // Find max
+        DBObject resultObj = collection.findOne(queryObj, fieldsObj, sortObj);
+        int maxRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
+        
+        // Find min
+        sortObj.put("randomizer", +1);
+        resultObj = collection.findOne(queryObj, fieldsObj, sortObj);
+        int minRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
+
+        return new Range(minRandomizer, maxRandomizer);
+    }
+
+    private Range getRandomizerRange()
+    {
+    	QueryBuilder queryObjBuilder = QueryBuilder
+        		.start();
+        return getRandomizerRange(queryObjBuilder);
     }
 
     @Override
@@ -251,11 +295,15 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
     	long count = collection.count(query);
     	return count;
     }
-
+	
     @Override
     public SubscriptionData getRandomSubscriptionInSite(String siteId)
     {
-        int random = (int) (Math.random() * (double) 1e6);
+        Range range = getRandomizerRange(Arrays.asList(siteId));
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
+
         BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
                 .add(FIELD_STATE, DataCreationState.Created.toString());
         if(siteId != null)
@@ -280,7 +328,11 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
     @Override
     public SubscriptionData getRandomSubscription(String username)
     {
-        int random = (int) (Math.random() * (double) 1e6);
+        Range range = getRandomizerRange();
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
+
         BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
                 .add(FIELD_STATE, DataCreationState.Created.toString())
                 .push(FIELD_RANDOMIZER)
@@ -305,7 +357,10 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
     @Override
     public Stream<SubscriptionData> getRandomSubscriptions(String username, int limit)
     {
-        int random = (int) (Math.random() * (double) 1e6);
+        Range range = getRandomizerRange();
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
 
         BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
                 .add(FIELD_STATE, DataCreationState.Created.toString())

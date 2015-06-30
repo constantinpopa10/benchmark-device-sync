@@ -163,18 +163,24 @@ public class SubscriptionData
 
     public static SubscriptionData fromDBObject(DBObject dbObject)
     {
-    	ObjectId id = (ObjectId)dbObject.get("_id");
-    	String username = (String)dbObject.get(FIELD_USERNAME);
-    	String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
-    	String siteId = (String)dbObject.get(FIELD_SITE_ID);
-    	String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
-    	int randomizer = (Integer)dbObject.get(FIELD_RANDOMIZER);
-    	String stateStr = (String)dbObject.get(FIELD_STATE);
-    	DataCreationState state = (stateStr != null ? DataCreationState.valueOf(stateStr) : null);
-    	String subscriptionType = (String)dbObject.get(FIELD_SUBSCRIPTION_TYPE);
-    	String path = (String)dbObject.get(FIELD_PATH);
-    	SubscriptionData subscriptionData = new SubscriptionData(id, siteId, username, subscriberId, subscriptionId,
-    			subscriptionType, path, state, randomizer);
+    	SubscriptionData subscriptionData = null;
+
+    	if(dbObject != null)
+    	{
+	    	ObjectId id = (ObjectId)dbObject.get("_id");
+	    	String username = (String)dbObject.get(FIELD_USERNAME);
+	    	String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
+	    	String siteId = (String)dbObject.get(FIELD_SITE_ID);
+	    	String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
+	    	int randomizer = (Integer)dbObject.get(FIELD_RANDOMIZER);
+	    	String stateStr = (String)dbObject.get(FIELD_STATE);
+	    	DataCreationState state = (stateStr != null ? DataCreationState.valueOf(stateStr) : null);
+	    	String subscriptionType = (String)dbObject.get(FIELD_SUBSCRIPTION_TYPE);
+	    	String path = (String)dbObject.get(FIELD_PATH);
+	    	subscriptionData = new SubscriptionData(id, siteId, username, subscriberId, subscriptionId,
+	    			subscriptionType, path, state, randomizer);
+	    }
+    
     	return subscriptionData;
     }
 

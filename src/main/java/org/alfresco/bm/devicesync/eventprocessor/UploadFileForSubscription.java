@@ -122,7 +122,6 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
         }
         catch(UploadFileException e)
         {
-        	e.printStackTrace();
             return new EventResult(
             		BasicDBObjectBuilder
                     	.start()

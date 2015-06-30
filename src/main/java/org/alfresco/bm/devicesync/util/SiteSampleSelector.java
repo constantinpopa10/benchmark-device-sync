@@ -82,20 +82,21 @@ public class SiteSampleSelector
 		}
 		else
 		{
-			Stream<SubscriptionData> subscriptionDataStream = subscriptionsService.getRandomSubscriptions(null, 10);
-			List<SubscriptionData> matchingSubscriptions = subscriptionDataStream.filter(sd -> {
-				String siteId = sd.getSiteId();
-				String path = "/Company Home/Sites/" + siteId + "/documentLibrary/";
-				long numNodes = nodesDataService.countNodesUnderFolder(path);
-				logger.debug("Num nodes for subscription " + sd + ", site " + siteId + " is " + numNodes);
-				return numNodes > 0;
-			}).limit(1).collect(Collectors.toList());
-			if(matchingSubscriptions.size() < 1)
+			Stream<String> sites = nodesDataService.randomSitesWithContent(100);
+			List<SubscriptionData> subscriptions = sites.map(siteId -> {
+				SubscriptionData subscriptionData1 = subscriptionsService.getRandomSubscriptionInSite(siteId);
+
+				logger.debug("Random site " + siteId + ", subscription " + subscriptionData1);
+
+				return subscriptionData1;
+			})
+			.filter(sd -> sd != null)
+			.limit(1)
+			.collect(Collectors.toList());
+			if(subscriptions.size() > 0)
 			{
-				logger.debug("Giving up, no matching subscriptions with more than 1 node");
-				throw new RuntimeException();
+				subscriptionData = subscriptions.get(0);
 			}
-			subscriptionData = matchingSubscriptions.get(0);
 		}
 
 		return subscriptionData;

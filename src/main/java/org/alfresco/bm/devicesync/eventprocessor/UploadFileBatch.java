@@ -90,12 +90,21 @@ public class UploadFileBatch extends AbstractEventProcessor
             else
             {
             	{
+            		// TODO fix up so we get at least batchSize even if siteSampleSelector
+            		// fails to give us a subscription. Stream?
 	            	for(int i = 0; i < batchSize; i++)
 	            	{
 	            		SubscriptionData subscriptionData = siteSampleSelector.getSubscription();
-	                	Event nextEvent = new Event(eventNameUploadFile, System.currentTimeMillis(),
-	                			subscriptionData.toDBObject());
-	                	nextEvents.add(nextEvent);
+	            		if(subscriptionData != null)
+	            		{
+		                	Event nextEvent = new Event(eventNameUploadFile, System.currentTimeMillis(),
+		                			subscriptionData.toDBObject());
+		                	nextEvents.add(nextEvent);
+	            		}
+	            		else
+	            		{
+	            			logger.warn("Unable to get random subscription");
+	            		}
 	            	}
             	}
 

@@ -92,17 +92,26 @@ public class SyncBatch extends AbstractEventProcessor
             else
             {
             	{
+//            		List<Event> events = 
+            		// TODO fix up so we get at least batchSize even if siteSampleSelector
+            		// fails to give us a subscription. Stream?
 	            	for(int i = 0; i < batchSize; i++)
 	            	{
 	            		SubscriptionData subscriptionData = siteSampleSelector.getSubscription();
-
-	            		SyncData syncData = new SyncData(subscriptionData.getSiteId(),
-	            				subscriptionData.getUsername(),
-	            				subscriptionData.getSubscriberId(),
-	            				subscriptionData.getSubscriptionId(), null);
-	
-	                	Event nextEvent = new Event(eventNameStartSync, System.currentTimeMillis(), syncData.toDBObject());
-	                	nextEvents.add(nextEvent);
+	            		if(subscriptionData != null)
+	            		{
+		            		SyncData syncData = new SyncData(subscriptionData.getSiteId(),
+		            				subscriptionData.getUsername(),
+		            				subscriptionData.getSubscriberId(),
+		            				subscriptionData.getSubscriptionId(), null);
+		
+		                	Event nextEvent = new Event(eventNameStartSync, System.currentTimeMillis(), syncData.toDBObject());
+		                	nextEvents.add(nextEvent);
+	            		}
+	            		else
+	            		{
+	            			logger.warn("Unable to get random subscription");
+	            		}
 	            	}
             	}
 

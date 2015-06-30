@@ -106,8 +106,6 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 	        	{
 	            	for(int i = 0; i < batchSize; i++)
 	            	{
-//	            		String siteId = siteSampleSelector.getSite();
-
 	            		// for a random subscriber...
 	            		SubscriberData subscriberData = subscribersDataService.getRandomSubscriber(null);
 	            		String subscriberId = subscriberData.getSubscriberId();
@@ -118,12 +116,19 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 	            				DataCreationState.Created, username,
 	            				SiteRole.SiteManager.toString(), SiteRole.SiteCollaborator.toString(),
 	            				SiteRole.SiteContributor.toString());
-	            		String siteId = siteMemberData.getSiteId();
-
-	            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
-	                	Event nextEvent = new Event(eventNameCreateSubscription, System.currentTimeMillis(),
-	                			subscriptionData.toDBObject());
-	                	nextEvents.add(nextEvent);
+	            		if(siteMemberData != null)
+	            		{
+		            		String siteId = siteMemberData.getSiteId();
+	
+		            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
+		                	Event nextEvent = new Event(eventNameCreateSubscription, System.currentTimeMillis(),
+		                			subscriptionData.toDBObject());
+		                	nextEvents.add(nextEvent);
+	            		}
+	            		else
+	            		{
+	            			logger.warn("Got null site from siteDataService.randomSiteMember");
+	            		}
 	            	}
 	        	}
 

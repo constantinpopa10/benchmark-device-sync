@@ -269,11 +269,14 @@ public class UploadFileHelper
 	            uploadListener.beforeUpload();
 	            Document newFile = folder.createDocument(newFileProps, cs, VersioningState.MAJOR);
 	            uploadListener.afterUpload();
-	
-	            String id = normalizeNodeId(newFile.getId());
+
+	            String nodeId = normalizeNodeId(newFile.getId());
 	            String name = newFile.getName();
 	            List<String> paths = newFile.getPaths();
-	
+	            String nodePath = (paths != null && paths.size() > 0 ? paths.get(0) : null);
+
+	            nodesDataService.addNode(siteId, username, nodeId, nodePath, name, "cm:document");
+
 	            UploadData uploadData = new UploadData()
 	            	.setFilename(filename)
 	            	.setSubscriptionPath(subscriptionPath)
@@ -283,7 +286,7 @@ public class UploadFileHelper
 	            	.setFileLen(fileLen)
 	            	.setParentId(parentId)
 	            	.setParentPath(parentPath)
-	            	.setId(id)
+	            	.setId(nodeId)
 	            	.setName(name)
 	            	.setPaths(paths)
 	            	.setUploadType(UPLOAD_TYPE.CREATE);
@@ -429,7 +432,7 @@ public class UploadFileHelper
 	        		.add("id", id)
 	        		.add("name", name)
 	        		.add("paths", paths)
-	        		.add("uploadType", uploadType.toString())
+	        		.add("uploadType", (uploadType != null ? uploadType.toString() : null))
 	        		.get();
 	        return data;
 		}

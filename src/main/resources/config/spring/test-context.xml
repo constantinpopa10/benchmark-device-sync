@@ -333,7 +333,12 @@
         <constructor-arg name="downloadFileHelper" ref="downloadFileHelper" />
     </bean>
 
-    <bean id="event.fileDownloaded" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="event.base"/>
-    <bean id="event.fileUploaded" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="event.base"/>
+    <bean id="event.fileDownloaded" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base">
+        <property name="chart" value="false" />
+    </bean>
+
+    <bean id="event.fileUploaded" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base">
+        <property name="chart" value="false" />
+    </bean>
 
 </beans>
