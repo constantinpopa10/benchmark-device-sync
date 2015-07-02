@@ -96,7 +96,6 @@ public class StartSync extends AbstractEventProcessor
 
 				logger.debug("response = " + response);
 
-	            // create same event again - delay to next event
 				long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
 						syncData.getSubscriptionId(), syncId, -1, -1, false, endTime, "Started sync " + syncId);

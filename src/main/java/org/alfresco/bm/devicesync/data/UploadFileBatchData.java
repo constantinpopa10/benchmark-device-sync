@@ -37,7 +37,6 @@ public class UploadFileBatchData implements Serializable
     	return dbObject;
     }
 
-	@SuppressWarnings("unchecked")
     public static UploadFileBatchData fromDBObject(DBObject dbObject)
     {
     	int count = (Integer)dbObject.get(FIELD_COUNT);

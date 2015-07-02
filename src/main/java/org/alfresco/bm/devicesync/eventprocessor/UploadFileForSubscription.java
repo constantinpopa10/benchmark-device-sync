@@ -21,6 +21,7 @@ package org.alfresco.bm.devicesync.eventprocessor;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.CMISEventData;
 import org.alfresco.bm.devicesync.data.SubscriptionData;
+import org.alfresco.bm.devicesync.data.UploadFileData;
 import org.alfresco.bm.devicesync.util.UploadFileException;
 import org.alfresco.bm.devicesync.util.UploadFileHelper;
 import org.alfresco.bm.devicesync.util.UploadFileHelper.UploadListener;
@@ -81,12 +82,13 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
         super.suspendTimer();                               // Timer control
 
         DBObject dbObject = (DBObject)event.getData();
-        String subscriptionId = (String)dbObject.get("subscriptionId");
+        UploadFileData uploadFileData = UploadFileData.fromDBObject(dbObject);
+        String subscriptionId = uploadFileData.getSubscriptionId();
         SubscriptionData subscriptionData = subscriptionsService.getSubscription(subscriptionId);
 
         try
         {
-        	DBObject data = uploadFileHelper.doUpload(subscriptionData, new UploadListener()
+        	DBObject data = uploadFileHelper.doUpload(uploadFileData, subscriptionData, new UploadListener()
 			{
 				@Override
 				public void beforeUpload()

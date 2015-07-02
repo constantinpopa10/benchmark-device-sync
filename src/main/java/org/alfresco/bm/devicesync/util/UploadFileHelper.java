@@ -17,9 +17,8 @@ import java.util.UUID;
 
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.SubscriptionData;
+import org.alfresco.bm.devicesync.data.UploadFileData;
 import org.alfresco.bm.file.TestFileService;
-import org.alfresco.bm.site.SiteDataService;
-import org.alfresco.bm.site.SiteMemberData;
 import org.alfresco.bm.user.UserData;
 import org.alfresco.bm.user.UserDataService;
 import org.alfresco.repomirror.dao.NodesDataService;
@@ -54,20 +53,19 @@ public class UploadFileHelper
     private OperationContext opContext;
     private final TestFileService testFileService;
     private final NodesDataService nodesDataService;
-    private final SiteDataService siteDataService;
+	private Set<String> siteRoles = new HashSet<>();
 
     private String cmisBindingUrl;
 
     private Random random = new Random(System.currentTimeMillis());
 
     public UploadFileHelper(TestFileService testFileService, NodesDataService nodesDataService,
-    		SubscriptionsService subscriptionsService, SiteDataService siteDataService,
-    		UserDataService userDataService, String alfrescoHost, int alfrescoPort)
+    		SubscriptionsService subscriptionsService, UserDataService userDataService,
+    		String alfrescoHost, int alfrescoPort)
     {
         this.testFileService = testFileService;
         this.nodesDataService = nodesDataService;
         this.userDataService = userDataService;
-        this.siteDataService = siteDataService;
 
         StringBuilder sb = new StringBuilder("http://");
         sb.append(alfrescoHost);
@@ -438,27 +436,26 @@ public class UploadFileHelper
 		}
 	}
 
-	public DBObject doUpload(SubscriptionData subscriptionData, UploadListener uploadListener,
-			String filenamePrefix) throws IOException
+	public DBObject doUpload(UploadFileData uploadFileData, SubscriptionData subscriptionData,
+			UploadListener uploadListener, String filenamePrefix) throws IOException
 	{
         try
         {
-	        String siteId = subscriptionData.getSiteId();
 	        String username = subscriptionData.getUsername();
-	
+	        int numChildren = (uploadFileData.getNumChildren() != null ? uploadFileData.getNumChildren() : -1);
+	        int numChildFolders = (uploadFileData.getNumChildFolders() != null ? uploadFileData.getNumChildFolders() : -1);
+	        int numContentChildren = (numChildren != -1 && numChildFolders != -1 ? numChildren - numChildFolders : -1);
+
 	        // A quick double-check
 	        if (username == null)
 	        {
 	            throw new RuntimeException("Unable to start CMIS session without a username.");
 	        }
 
-        	Set<String> roles = new HashSet<>();
-        	roles.add("SiteManager");
-        	roles.add("SiteCollaborator");
-        	SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
-        	String role = siteMemberData.getRole();
+        	String siteRole = uploadFileData.getSiteRole();
+
             UploadData uploadData = null;
-        	if(!roles.contains(role))
+        	if(numContentChildren < 1 || !siteRoles.contains(siteRole))
         	{
         		uploadData = create(filenamePrefix, subscriptionData, uploadListener);
         	}

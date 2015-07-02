@@ -3,6 +3,7 @@ package org.alfresco.bm.devicesync.eventprocessor;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.SyncData;
 import org.alfresco.bm.devicesync.util.PublicApiFactory;
 import org.alfresco.bm.event.AbstractEventProcessor;
@@ -29,7 +30,8 @@ public class EndSync extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(EndSync.class);
 
-    private PublicApiFactory publicApiFactory;
+    private final PublicApiFactory publicApiFactory;
+    private final SubscriptionsService subscriptionsService;
 
     /**
      * Constructor
@@ -43,9 +45,10 @@ public class EndSync extends AbstractEventProcessor
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public EndSync(PublicApiFactory publicApiFactory)
+    public EndSync(PublicApiFactory publicApiFactory, SubscriptionsService subscriptionsService)
     {
     	this.publicApiFactory = publicApiFactory;
+    	this.subscriptionsService = subscriptionsService;
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'end sync'.");
@@ -77,6 +80,8 @@ public class EndSync extends AbstractEventProcessor
         	super.resumeTimer();
 			alfresco.endSync("-default-", subscriberId, subscriptionId, syncId);
 	    	super.suspendTimer();
+
+	    	subscriptionsService.incrementSubscriptionSyncs(subscriptionId);
 
 	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
 	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),

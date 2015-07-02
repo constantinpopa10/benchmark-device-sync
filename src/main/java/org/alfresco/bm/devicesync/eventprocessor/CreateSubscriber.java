@@ -89,7 +89,11 @@ public class CreateSubscriber extends AbstractEventProcessor
         	super.resumeTimer();
     		Subscriber subscriber = alfresco.createSubscriber("-default-", "test");
         	super.suspendTimer();
-        	subscribersService.addSubscriber(username, subscriber.getId(), DataCreationState.Created);
+
+        	String subscriberId = subscriber.getId();
+    		String syncServiceURI = subscriber.getSyncService().getUri();
+        	subscribersService.addSubscriber(username, subscriberId, syncServiceURI,
+        			DataCreationState.Created);
 
             List<Event> nextEvents = new LinkedList<>();
         	String msg = "Created subscriber " + subscriber;

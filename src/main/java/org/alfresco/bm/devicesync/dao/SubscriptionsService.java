@@ -26,4 +26,5 @@ public interface SubscriptionsService
     SubscriptionData getRandomSubscription(String username);
     SubscriptionData getRandomSubscriptionInSite(String siteId);
     Stream<SubscriptionData> getRandomSubscriptions(String username, int limit);
+    void incrementSubscriptionSyncs(String subscriptionId);
 }

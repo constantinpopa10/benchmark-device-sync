@@ -2,11 +2,13 @@ package org.alfresco.bm.devicesync.eventprocessor;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
-import org.alfresco.bm.devicesync.data.SubscriptionData;
 import org.alfresco.bm.devicesync.data.UploadFileBatchData;
+import org.alfresco.bm.devicesync.data.UploadFileData;
 import org.alfresco.bm.devicesync.util.SiteSampleSelector;
 import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
@@ -90,22 +92,16 @@ public class UploadFileBatch extends AbstractEventProcessor
             else
             {
             	{
-            		// TODO fix up so we get at least batchSize even if siteSampleSelector
-            		// fails to give us a subscription. Stream?
-	            	for(int i = 0; i < batchSize; i++)
-	            	{
-	            		SubscriptionData subscriptionData = siteSampleSelector.getSubscription();
-	            		if(subscriptionData != null)
-	            		{
+            		try(Stream<UploadFileData> subscriptions = siteSampleSelector.getSubscriptions(batchSize))
+            		{
+            			List<Event> events = subscriptions.map(ufd -> {
 		                	Event nextEvent = new Event(eventNameUploadFile, System.currentTimeMillis(),
-		                			subscriptionData.toDBObject());
-		                	nextEvents.add(nextEvent);
-	            		}
-	            		else
-	            		{
-	            			logger.warn("Unable to get random subscription");
-	            		}
-	            	}
+		                			ufd.toDBObject());
+		                	return nextEvent;
+	            		})
+	            		.collect(Collectors.toList());
+	            		nextEvents.addAll(events);
+            		}
             	}
 
             	{

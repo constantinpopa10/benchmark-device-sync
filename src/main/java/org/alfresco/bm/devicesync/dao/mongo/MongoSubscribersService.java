@@ -4,10 +4,13 @@ import static org.alfresco.bm.devicesync.data.SubscriberData.fromDBObject;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscribersService;
 import org.alfresco.bm.devicesync.data.SubscriberData;
+import org.alfresco.bm.user.UserDataServiceImpl.Range;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -93,6 +96,36 @@ public class MongoSubscribersService implements SubscribersService, Initializing
         collection.createIndex(idxDomainRand, optDomainRand);
     }
 
+    private Range getRandomizerRange(QueryBuilder queryObjBuilder)
+    {
+        DBObject queryObj = queryObjBuilder.get();
+
+        DBObject fieldsObj = BasicDBObjectBuilder.start()
+                .add("randomizer", Boolean.TRUE)
+                .get();
+        
+        DBObject sortObj = BasicDBObjectBuilder.start()
+                .add("randomizer", -1)
+                .get();
+        
+        // Find max
+        DBObject resultObj = collection.findOne(queryObj, fieldsObj, sortObj);
+        int maxRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
+        
+        // Find min
+        sortObj.put("randomizer", +1);
+        resultObj = collection.findOne(queryObj, fieldsObj, sortObj);
+        int minRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
+
+        return new Range(minRandomizer, maxRandomizer);
+    }
+
+    private Range getRandomizerRange()
+    {
+    	QueryBuilder queryObjBuilder = QueryBuilder.start();
+    	return getRandomizerRange(queryObjBuilder);
+    }
+
     @Override
     public void addSubscriber(String username, DataCreationState state)
     {
@@ -102,10 +135,10 @@ public class MongoSubscribersService implements SubscribersService, Initializing
     }
 
 	@Override
-    public void addSubscriber(String username, String subscriberId,
+    public void addSubscriber(String username, String subscriberId, String syncServiceURI,
             DataCreationState state)
     {
-    	SubscriberData subscriberData = new SubscriberData(username, subscriberId, state);
+    	SubscriberData subscriberData = new SubscriberData(username, subscriberId, syncServiceURI, state);
     	DBObject insert = subscriberData.toDBObject();
     	collection.insert(insert);
     }
@@ -194,17 +227,26 @@ public class MongoSubscribersService implements SubscribersService, Initializing
     @Override
     public SubscriberData getRandomSubscriber(String username)
     {
-        int random = (int) (Math.random() * (double) 1e6);
-        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
-                .add(FIELD_STATE, DataCreationState.Created.toString())
-                .push(FIELD_RANDOMIZER)
-                    .add("$gte", Integer.valueOf(random))
-                .pop();
+        QueryBuilder rangeBuilder = QueryBuilder
+                .start(FIELD_STATE).is(DataCreationState.Created.toString());
         if(username != null)
         {
-        	builder.add(FIELD_USERNAME, username);
+        	rangeBuilder.and(FIELD_USERNAME).is(username);
         }
-        DBObject queryObj = builder.get();
+    	Range range = getRandomizerRange(rangeBuilder);
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
+
+        QueryBuilder queryBuilder = QueryBuilder
+                .start(FIELD_STATE).is(DataCreationState.Created.toString());
+        if(username != null)
+        {
+        	queryBuilder.and(FIELD_USERNAME).is(username);
+        }
+        queryBuilder
+                .and(FIELD_RANDOMIZER).greaterThanEquals(random);
+        DBObject queryObj = queryBuilder.get();
 
         DBObject dbObject = collection.findOne(queryObj);
         if(dbObject == null)
@@ -223,5 +265,41 @@ public class MongoSubscribersService implements SubscribersService, Initializing
 				.start(FIELD_SUBSCRIBER_ID, subscriberId)
 				.get();
 		collection.remove(query);
+    }
+
+	@Override
+    public Stream<SubscriberData> randomSubscribers(int limit)
+    {
+        Range range = getRandomizerRange();
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
+
+        QueryBuilder queryBuilder = QueryBuilder
+                .start(FIELD_STATE).is(DataCreationState.Created.toString())
+                .and(FIELD_RANDOMIZER).greaterThanEquals(random);
+        DBObject queryObj = queryBuilder.get();
+        DBObject orderBy = BasicDBObjectBuilder
+        		.start(FIELD_RANDOMIZER, 1)
+        		.get();
+        long count = collection.count(queryObj);
+        if(limit > 0 && count < limit)
+        {
+        	queryObj.put(FIELD_RANDOMIZER, BasicDBObjectBuilder.start("$lte", random).get());
+            count = collection.count(queryObj);
+            if(limit > 0 && count < limit)
+            {
+            	throw new RuntimeException("Not enough subscriptions for limit " + limit);
+            }
+            orderBy = BasicDBObjectBuilder
+            		.start(FIELD_RANDOMIZER, -1)
+            		.get();
+        }
+
+    	DBCursor cur = collection.find(queryObj).sort(orderBy);
+    	Stream<SubscriberData> stream = StreamSupport.stream(cur.spliterator(), false)
+    		.onClose(() -> cur.close())
+    		.map(dbo -> SubscriberData.fromDBObject(dbo)); // need to close cursor;
+    	return stream;
     }
 }

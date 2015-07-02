@@ -2,14 +2,18 @@ package org.alfresco.bm.devicesync.eventprocessor;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.alfresco.bm.data.DataCreationState;
+import org.alfresco.bm.devicesync.dao.ExtendedSiteDataService;
 import org.alfresco.bm.devicesync.data.SubscriberBatchData;
 import org.alfresco.bm.devicesync.data.SubscriberData;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
-import org.alfresco.bm.user.UserData;
-import org.alfresco.bm.user.UserDataService;
+import org.alfresco.bm.site.SiteMemberData;
+import org.alfresco.bm.site.SiteRole;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,7 +29,7 @@ public class SubscribersBatch extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(SubscribersBatch.class);
 
-    private final UserDataService userDataService;
+    private final ExtendedSiteDataService siteDataService;
 
     private final String eventNameCreateSubscriber;
 
@@ -42,10 +46,11 @@ public class SubscribersBatch extends AbstractEventProcessor
      * @param numberOfClients_p             Number of clients to create
      * @param nextEventId_p                 ID of the next event
      */
-    public SubscribersBatch(UserDataService userDataService, int batchSize, int numBatches, int waitTimeBetweenBatches,
+    public SubscribersBatch(ExtendedSiteDataService siteDataService,
+    		int batchSize, int numBatches, int waitTimeBetweenBatches,
     		String eventNameCreateSubscriber)
     {
-    	this.userDataService = userDataService;
+    	this.siteDataService = siteDataService;
     	this.eventNameCreateSubscriber = eventNameCreateSubscriber;
     	this.batchSize = batchSize;
     	this.numBatches = numBatches;
@@ -89,16 +94,29 @@ public class SubscribersBatch extends AbstractEventProcessor
             }
             else
             {
-	        	{
-	            	for(int i = 0; i < batchSize; i++)
-	            	{
-	            		UserData userData = userDataService.getRandomUser();
-	            		String username = userData.getUsername();
+            	int subscribersCreated = 0;
+
+        		// we create subscribers based on users who are members of sites...
+        		try(Stream<SiteMemberData> siteMembers = siteDataService.randomSiteMembers(DataCreationState.Created,
+        				new String[] {SiteRole.SiteManager.toString(),
+        				SiteRole.SiteCollaborator.toString(),
+        				SiteRole.SiteContributor.toString()},
+        				batchSize))
+				{
+        			List<Event> events = siteMembers.map(sm -> {
+                		String username = sm.getUsername();
+
+                		logger.debug("Subscriber, site member " + sm);
+
 	            		SubscriberData subscriberData = new SubscriberData(username);
-	                	Event nextEvent = new Event(eventNameCreateSubscriber, System.currentTimeMillis(), subscriberData.toDBObject());
-	                	nextEvents.add(nextEvent);
-	            	}
-	        	}
+	                	Event nextEvent = new Event(eventNameCreateSubscriber, System.currentTimeMillis(),
+	                			subscriberData.toDBObject());
+	                	return nextEvent;
+        			})
+        			.collect(Collectors.toList());
+        			subscribersCreated = events.size();
+                	nextEvents.addAll(events);
+				}
 	
 	        	{
 	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
@@ -108,7 +126,7 @@ public class SubscribersBatch extends AbstractEventProcessor
 	            	nextEvents.add(nextEvent);
 	        	}
 
-	        	msg = "Prepared " + batchSize + " subscriber creates";
+	        	msg = "Prepared " + subscribersCreated + " subscriber creates";
             }
 
             if (logger.isDebugEnabled())

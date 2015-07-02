@@ -412,4 +412,20 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
 				.get();
 		collection.remove(query);
     }
+	
+	@Override
+	public void incrementSubscriptionSyncs(String subscriptionId)
+	{
+		DBObject query = BasicDBObjectBuilder
+				.start(FIELD_SUBSCRIPTION_ID, subscriptionId)
+				.get();
+		DBObject update = BasicDBObjectBuilder
+				.start()
+				.push("$inc")
+					.add("quantity", 1)
+					.add("numSyncs", 1)
+				.pop()
+				.get();
+		collection.update(query, update, false, false);
+	}
 }

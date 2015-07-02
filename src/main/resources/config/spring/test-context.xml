@@ -43,7 +43,7 @@
     <!--                        -->
     <!-- Site Data Service      -->
     <!--                        -->
-    <bean id="siteDataService" class="org.alfresco.bm.site.SiteDataServiceImpl">
+    <bean id="siteDataService" class="org.alfresco.bm.devicesync.dao.mongo.ExtendedSiteDataServiceImpl">
         <constructor-arg name="db" ref="testMongoDB" />
         <constructor-arg name="sites" value="${mirror.sites}" />
         <constructor-arg name="siteMembers" value="${mirror.siteMembers}" />
@@ -140,7 +140,6 @@
         <constructor-arg name="testFileService" ref="testFileService" />
         <constructor-arg name="nodesDataService" ref="nodesDataService" />
         <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
-        <constructor-arg name="siteDataService" ref="siteDataService" />
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
         <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
@@ -235,7 +234,7 @@
     </bean>
 
     <bean id="event.subscribersBatch" class="org.alfresco.bm.devicesync.eventprocessor.SubscribersBatch" parent="event.base">
-        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="siteDataService" ref="siteDataService" />
         <constructor-arg name="batchSize" value="${subscribersBatch.batchSize}" />
         <constructor-arg name="numBatches" value="${subscribersBatch.numBatches}" />
         <constructor-arg name="waitTimeBetweenBatches" value="${subscribersBatch.waitTimeBetweenBatches}" />
@@ -245,7 +244,6 @@
 
     <bean id="event.subscriptionsBatch" class="org.alfresco.bm.devicesync.eventprocessor.SubscriptionsBatch" parent="event.base">
         <constructor-arg name="subscribersDataService" ref="subscribersDataService" />
-        <constructor-arg name="siteSampleSelector" ref="siteSampleSelector" />
         <constructor-arg name="siteDataService" ref="siteDataService" />
         <constructor-arg name="batchSize" value="${subscriptionsBatch.batchSize}" />
         <constructor-arg name="numBatches" value="${subscriptionsBatch.numBatches}" />
@@ -303,6 +301,7 @@
 
     <bean id="event.endSync" class="org.alfresco.bm.devicesync.eventprocessor.EndSync" parent="event.base">
         <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
     </bean>
 
     <bean id="event.prepareSyncs" class="org.alfresco.bm.devicesync.eventprocessor.PrepareSyncs" parent="event.base">
