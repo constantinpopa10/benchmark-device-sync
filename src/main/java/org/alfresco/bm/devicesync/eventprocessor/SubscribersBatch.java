@@ -95,6 +95,7 @@ public class SubscribersBatch extends AbstractEventProcessor
             else
             {
             	int subscribersCreated = 0;
+        		final long scheduledTime = System.currentTimeMillis();
 
         		// we create subscribers based on users who are members of sites...
         		try(Stream<SiteMemberData> siteMembers = siteDataService.randomSiteMembers(DataCreationState.Created,
@@ -109,7 +110,7 @@ public class SubscribersBatch extends AbstractEventProcessor
                 		logger.debug("Subscriber, site member " + sm);
 
 	            		SubscriberData subscriberData = new SubscriberData(username);
-	                	Event nextEvent = new Event(eventNameCreateSubscriber, System.currentTimeMillis(),
+	                	Event nextEvent = new Event(eventNameCreateSubscriber, scheduledTime,
 	                			subscriberData.toDBObject());
 	                	return nextEvent;
         			})
@@ -119,10 +120,11 @@ public class SubscribersBatch extends AbstractEventProcessor
 				}
 	
 	        	{
-	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
+	            	final long nextBatchScheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
 	            	SubscriberBatchData newSubscriberBatchData = new SubscriberBatchData(count + 1, batchSizeParameter,
 	            			numBatchesParameter, waitTimeBetweenBatchesParameter, nextEventName);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newSubscriberBatchData.toDBObject());
+	            	Event nextEvent = new Event(event.getName(), nextBatchScheduledTime,
+	            			newSubscriberBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
 	        	}
 

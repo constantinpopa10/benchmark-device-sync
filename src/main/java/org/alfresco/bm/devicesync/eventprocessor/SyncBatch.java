@@ -93,6 +93,8 @@ public class SyncBatch extends AbstractEventProcessor
             }
             else
             {
+        		long scheduledTime = System.currentTimeMillis();
+
             	{
             		// TODO fix up so we get at least batchSize even if siteSampleSelector
             		// fails to give us a subscription. Stream?
@@ -103,7 +105,7 @@ public class SyncBatch extends AbstractEventProcessor
 	                				ufd.getUsername(),
 	                				ufd.getSubscriberId(),
 	                				ufd.getSubscriptionId(), null);
-	                    	Event nextEvent = new Event(eventNameStartSync, System.currentTimeMillis(),
+	                    	Event nextEvent = new Event(eventNameStartSync, scheduledTime,
 	                    			syncData.toDBObject());
 	                    	return nextEvent;
 	            		})
@@ -114,9 +116,9 @@ public class SyncBatch extends AbstractEventProcessor
             	}
 
             	{
-	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
 	            	SyncBatchData newSyncBatchData = new SyncBatchData(count + 1, sites);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newSyncBatchData.toDBObject());
+	            	Event nextEvent = new Event(event.getName(), scheduledTime + waitTimeBetweenBatches,
+	            			newSyncBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
             	}
 

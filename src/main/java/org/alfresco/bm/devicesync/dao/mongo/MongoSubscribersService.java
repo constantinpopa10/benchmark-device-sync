@@ -296,7 +296,7 @@ public class MongoSubscribersService implements SubscribersService, Initializing
             		.get();
         }
 
-    	DBCursor cur = collection.find(queryObj).sort(orderBy);
+    	DBCursor cur = collection.find(queryObj).sort(orderBy).limit(limit);
     	Stream<SubscriberData> stream = StreamSupport.stream(cur.spliterator(), false)
     		.onClose(() -> cur.close())
     		.map(dbo -> SubscriberData.fromDBObject(dbo)); // need to close cursor;

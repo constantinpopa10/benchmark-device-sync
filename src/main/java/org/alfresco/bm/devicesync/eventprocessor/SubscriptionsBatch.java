@@ -101,6 +101,7 @@ public class SubscriptionsBatch extends AbstractEventProcessor
             else
             {
             	int subscriptionsCreated = 0;
+            	long scheduledTime = System.currentTimeMillis();
 
         		// we assume that subscribers are a member of at least one site
             	try(Stream<SubscriberData> subscribers = subscribersDataService.randomSubscribers(batchSize))
@@ -116,7 +117,7 @@ public class SubscriptionsBatch extends AbstractEventProcessor
                 		logger.debug("Got site member data " + sm + " for user " + username);
 
 	            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
-	                	Event nextEvent = new Event(eventNameCreateSubscription, System.currentTimeMillis(),
+	                	Event nextEvent = new Event(eventNameCreateSubscription, scheduledTime,
 	                			subscriptionData.toDBObject());
 	                	return nextEvent;
             		})
@@ -152,11 +153,11 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 //				}
 
 	        	{
-	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
+	            	long batchScheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
 	            	SubscriptionBatchData newSubscriptionBatchData = new SubscriptionBatchData(count + 1,
 	            			batchSizeParameter, numBatchesParameter, waitTimeBetweenBatchesParameter, nextEventName,
 	            			sites);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newSubscriptionBatchData.toDBObject());
+	            	Event nextEvent = new Event(event.getName(), batchScheduledTime, newSubscriptionBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
 	        	}
 
