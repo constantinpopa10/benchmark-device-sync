@@ -34,11 +34,14 @@ public class GetSync extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(GetSync.class);
 
-    private PublicApiFactory publicApiFactory;
-    private int waitTimeMillisBeforeSyncOps;
-    private int maxTries;
-    private int timeBetweenGetFiles;
-    private boolean getFilesEnabled;
+    private final PublicApiFactory publicApiFactory;
+    private final int timeBetweenSyncOps;
+    private final int maxTries;
+    private final int timeBetweenGetFiles;
+    private final int timeBetweenGetSyncs;
+    private final boolean getFilesEnabled;
+    private final String eventNameEndSync;
+    private final String eventNameGetFile;
 
     /**
      * Constructor
@@ -52,14 +55,18 @@ public class GetSync extends AbstractEventProcessor
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public GetSync(PublicApiFactory publicApiFactory, int waitTimeMillisBeforeSyncOps, int maxTries, int timeBetweenGetFiles,
-    		boolean getFilesEnabled)
+    public GetSync(PublicApiFactory publicApiFactory, int timeBetweenSyncOps, int maxTries, int timeBetweenGetFiles,
+    		int timeBetweenGetSyncs, boolean getFilesEnabled, String eventNameEndSync, String eventNameGetFile)
     {
     	this.publicApiFactory = publicApiFactory;
-    	this.waitTimeMillisBeforeSyncOps = waitTimeMillisBeforeSyncOps;
+    	this.timeBetweenSyncOps = timeBetweenSyncOps;
     	this.maxTries = maxTries;
     	this.timeBetweenGetFiles = timeBetweenGetFiles;
+    	this.timeBetweenGetSyncs = timeBetweenGetSyncs;
     	this.getFilesEnabled = getFilesEnabled;
+    	this.eventNameEndSync = eventNameEndSync;
+    	this.eventNameGetFile = eventNameGetFile;
+
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'get sync'.");
@@ -72,14 +79,18 @@ public class GetSync extends AbstractEventProcessor
     	return alfresco;
     }
 
-    private void getSync(int counter, Alfresco alfresco, SyncData syncData) 
+    private void getSync(Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
     		throws JsonParseException, JsonMappingException, IOException
     {
     	String subscriberId = syncData.getSubscriptionId();
     	String subscriptionId = syncData.getSubscriptionId();
 		String syncId = syncData.getSyncId();
+		int counter = syncData.getNumRetries();
 
+    	super.resumeTimer();
 		GetChangesResponse response = alfresco.getSync("-default-", subscriberId, subscriptionId, syncId);
+    	super.suspendTimer();
+
 		logger.debug("response = " + response);
 
 		String status = response.getStatus();
@@ -89,7 +100,17 @@ public class GetSync extends AbstractEventProcessor
 			if(counter < maxTries)
 			{
 				syncData.incrementRetries();
-				getSync(counter + 1, alfresco, syncData);
+				try
+                {
+	                Thread.sleep(timeBetweenGetSyncs);
+                }
+				catch (InterruptedException e)
+                {
+					// ok
+                }
+
+				Event event = new Event(this.getName(), System.currentTimeMillis() + timeBetweenGetSyncs, syncData.toDBObject());
+				nextEvents.add(event);
 			}
 			else
 			{
@@ -98,6 +119,33 @@ public class GetSync extends AbstractEventProcessor
 			break;
 		case "ready":
 			syncData.gotResults(response.getChanges());
+
+            String username = syncData.getUsername();
+	    	int numSyncChanges = syncData.getNumSyncChanges();
+
+	    	if(getFilesEnabled && numSyncChanges > 0)
+	    	{
+	    		for(Change change: syncData.getChanges())
+	    		{
+	    			ChangeType changeType = change.getType();
+	    			if(changeType.equals(ChangeType.CREATE_REPOS) || changeType.equals(ChangeType.UPDATE_REPOS))
+	    			{
+	    				String path = change.getPath();
+	    				DBObject getFileParameter = BasicDBObjectBuilder
+		    				.start("path", path)
+		    				.add("username", username)
+		    				.get();
+	    				long scheduledTime = System.currentTimeMillis() + timeBetweenGetFiles;
+	    	            Event nextEvent = new Event(eventNameGetFile, scheduledTime, getFileParameter);
+	    	        	nextEvents.add(nextEvent);
+	    			}
+	    		}
+	    	}
+
+			long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
+            Event nextEvent = new Event(eventNameEndSync, scheduledTime, syncData.toDBObject());
+        	nextEvents.add(nextEvent);
+
 			break;
 		default:
 		}
@@ -118,33 +166,7 @@ public class GetSync extends AbstractEventProcessor
 
             List<Event> nextEvents = new LinkedList<Event>();
 
-        	super.resumeTimer();
-			getSync(0, alfresco, syncData);
-	    	super.suspendTimer();
-
-	    	int numSyncChanges = syncData.getNumSyncChanges();
-	    	if(getFilesEnabled && numSyncChanges > 0)
-	    	{
-	    		for(Change change: syncData.getChanges())
-	    		{
-	    			ChangeType changeType = change.getType();
-	    			if(changeType.equals(ChangeType.CREATE_REPOS) || changeType.equals(ChangeType.UPDATE_REPOS))
-	    			{
-	    				String path = change.getPath();
-	    				DBObject getFileParameter = BasicDBObjectBuilder
-		    				.start("path", path)
-		    				.add("username", username)
-		    				.get();
-	    				long scheduledTime = System.currentTimeMillis() + timeBetweenGetFiles;
-	    	            Event nextEvent = new Event("getFile", scheduledTime, getFileParameter);
-	    	        	nextEvents.add(nextEvent);
-	    			}
-	    		}
-	    	}
-
-			long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
-            Event nextEvent = new Event("endSync", scheduledTime, syncData.toDBObject());
-        	nextEvents.add(nextEvent);
+			getSync(alfresco, syncData, nextEvents);
 
             return new EventResult(syncData.toDBObject(), nextEvents);
         }

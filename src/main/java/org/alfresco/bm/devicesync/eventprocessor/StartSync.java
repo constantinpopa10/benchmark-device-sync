@@ -33,9 +33,9 @@ public class StartSync extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(StartSync.class);
 
-    private SessionService sessionService;
-    private PublicApiFactory publicApiFactory;
-    private int waitTimeMillisBeforeSyncOps;
+    private final SessionService sessionService;
+    private final PublicApiFactory publicApiFactory;
+    private final int timeBetweenSyncOps;
 
     /**
      * Constructor
@@ -49,11 +49,11 @@ public class StartSync extends AbstractEventProcessor
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public StartSync(SessionService sessionService, PublicApiFactory publicApiFactory, int waitTimeMillisBeforeSyncOps)
+    public StartSync(SessionService sessionService, PublicApiFactory publicApiFactory, int timeBetweenSyncOps)
     {
     	this.sessionService = sessionService;
     	this.publicApiFactory = publicApiFactory;
-    	this.waitTimeMillisBeforeSyncOps = waitTimeMillisBeforeSyncOps;
+    	this.timeBetweenSyncOps = timeBetweenSyncOps;
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'start sync'.");
@@ -96,7 +96,7 @@ public class StartSync extends AbstractEventProcessor
 
 				logger.debug("response = " + response);
 
-				long scheduledTime = System.currentTimeMillis() + waitTimeMillisBeforeSyncOps;
+				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
 						syncData.getSubscriptionId(), syncId, -1, -1, false, endTime, "Started sync " + syncId);
 	            Event nextEvent = new Event("getSync", scheduledTime, syncData.toDBObject());

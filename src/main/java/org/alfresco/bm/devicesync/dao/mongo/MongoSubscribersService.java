@@ -289,7 +289,7 @@ public class MongoSubscribersService implements SubscribersService, Initializing
             count = collection.count(queryObj);
             if(limit > 0 && count < limit)
             {
-            	throw new RuntimeException("Not enough subscriptions for limit " + limit);
+            	throw new RuntimeException("Not enough subscribers for limit " + limit);
             }
             orderBy = BasicDBObjectBuilder
             		.start(FIELD_RANDOMIZER, -1)

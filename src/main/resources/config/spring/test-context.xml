@@ -218,6 +218,7 @@
         <constructor-arg name="eventNameSyncBatch" value="syncBatch" />
         <constructor-arg name="eventNameCollectStatsBatch" value="collectStatsBatch" />
         <constructor-arg name="eventNameUploadFileBatch" value="uploadFileBatch" />
+        <constructor-arg name="eventNameUploadAndSyncBatch" value="uploadAndSyncBatch" />
         <property name="chart" value="false" />
     </bean>
 
@@ -285,18 +286,32 @@
         <property name="chart" value="false" />
     </bean>
 
+    <bean id="event.uploadAndSyncBatch" class="org.alfresco.bm.devicesync.eventprocessor.UploadAndSyncBatch" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="siteSampleSelector" ref="siteSampleSelector" />
+        <constructor-arg name="batchSize" value="${uploadAndSyncBatch.batchSize}" />
+        <constructor-arg name="numBatches" value="${uploadAndSyncBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${uploadAndSyncBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameStartSync" value="startSync" />
+        <constructor-arg name="eventNameUploadFile" value="uploadFileForSubscription" />
+        <property name="chart" value="false" />
+    </bean>
+
     <bean id="event.startSync" class="org.alfresco.bm.devicesync.eventprocessor.StartSync" parent="event.base">
         <constructor-arg name="sessionService" ref="sessionService" />
         <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
-        <constructor-arg name="waitTimeMillisBeforeSyncOps" value="${sync.waitTimeMillisBeforeSyncOps}" />
+        <constructor-arg name="timeBetweenSyncOps" value="${sync.timeBetweenSyncOps}" />
     </bean>
 
     <bean id="event.getSync" class="org.alfresco.bm.devicesync.eventprocessor.GetSync" parent="event.base">
         <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
-        <constructor-arg name="waitTimeMillisBeforeSyncOps" value="${sync.waitTimeMillisBeforeSyncOps}" />
+        <constructor-arg name="timeBetweenSyncOps" value="${sync.timeBetweenSyncOps}" />
         <constructor-arg name="maxTries" value="${sync.getSync.maxTries}" />
+        <constructor-arg name="timeBetweenGetSyncs" value="${getSync.timeBetweenGetSyncs}" />
         <constructor-arg name="timeBetweenGetFiles" value="${getSync.timeBetweenGetFiles}" />
         <constructor-arg name="getFilesEnabled" value="${getSync.getFilesEnabled}"></constructor-arg>
+        <constructor-arg name="eventNameEndSync" value="endSync"></constructor-arg>
+        <constructor-arg name="eventNameGetFile" value="getFile"></constructor-arg> 
     </bean>
 
     <bean id="event.endSync" class="org.alfresco.bm.devicesync.eventprocessor.EndSync" parent="event.base">

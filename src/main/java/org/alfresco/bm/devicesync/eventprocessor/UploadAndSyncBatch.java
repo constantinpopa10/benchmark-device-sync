@@ -30,10 +30,10 @@ import com.mongodb.DBObject;
  * @author sglover
  * @since 1.0
  */
-public class SyncBatch extends AbstractEventProcessor
+public class UploadAndSyncBatch extends AbstractEventProcessor
 {
     /** Logger for the class */
-    private static Log logger = LogFactory.getLog(SyncBatch.class);
+    private static Log logger = LogFactory.getLog(UploadAndSyncBatch.class);
 
     private SubscriptionsService subscriptionsService;
 
@@ -44,6 +44,7 @@ public class SyncBatch extends AbstractEventProcessor
     private final SiteSampleSelector siteSampleSelector;
 
     private final String eventNameStartSync;
+    private final String eventNameUploadFile;
 
     /**
      * Constructor 
@@ -54,8 +55,9 @@ public class SyncBatch extends AbstractEventProcessor
      * @param numberOfClients_p             Number of clients to create
      * @param nextEventId_p                 ID of the next event
      */
-    public SyncBatch(SubscriptionsService subscriptionsService, SiteSampleSelector siteSampleSelector,
-    		int batchSize, int numBatches, int waitTimeBetweenBatches, String eventNameStartSync)
+    public UploadAndSyncBatch(SubscriptionsService subscriptionsService, SiteSampleSelector siteSampleSelector,
+    		int batchSize, int numBatches, int waitTimeBetweenBatches, String eventNameStartSync,
+    		String eventNameUploadFile)
     {
     	this.subscriptionsService = subscriptionsService;
     	this.siteSampleSelector = siteSampleSelector;
@@ -63,11 +65,11 @@ public class SyncBatch extends AbstractEventProcessor
         this.numBatches = numBatches;
         this.eventNameStartSync = eventNameStartSync;
         this.waitTimeBetweenBatches = waitTimeBetweenBatches;
+        this.eventNameUploadFile = eventNameUploadFile;
 
         // validate arguments
         Util.checkArgumentNotNull(subscriptionsService, "subscriptionsService");
     }
-
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
@@ -95,22 +97,29 @@ public class SyncBatch extends AbstractEventProcessor
             {
         		long scheduledTime = System.currentTimeMillis();
 
-        		// TODO fix up so we get at least batchSize even if siteSampleSelector
-        		// fails to give us a subscription. Stream?
         		try(Stream<UploadFileData> subscriptions = siteSampleSelector.getSubscriptions(batchSize))
         		{
-            		List<Event> events = subscriptions.map(ufd -> {
+        			List<Event> events = subscriptions.flatMap(ufd ->
+        			{
+	                	List<Event> ret = new LinkedList<>();
+
+	                	Event uploadFileEvent = new Event(eventNameUploadFile, scheduledTime,
+	                			ufd.toDBObject());
+	                	ret.add(uploadFileEvent);
+
                 		SyncData syncData = new SyncData(ufd.getSiteId(),
                 				ufd.getUsername(),
                 				ufd.getSubscriberId(),
                 				ufd.getSubscriptionId(), null);
-                    	Event nextEvent = new Event(eventNameStartSync, scheduledTime,
+                    	Event syncEvent = new Event(eventNameStartSync, scheduledTime + 500,
                     			syncData.toDBObject());
-                    	return nextEvent;
+                    	ret.add(syncEvent);
+
+	                	return ret.stream();
             		})
             		.collect(Collectors.toList());
 
-                	nextEvents.addAll(events);
+        			nextEvents.addAll(events);
         		}
 
             	{
@@ -120,7 +129,7 @@ public class SyncBatch extends AbstractEventProcessor
 	            	nextEvents.add(nextEvent);
             	}
 
-	            msg = "Prepared " + batchSize + " syncs";
+	            msg = "Prepared " + batchSize + " overlapping syncs";
             }
 
             EventResult result = new EventResult(msg, nextEvents);
@@ -134,7 +143,7 @@ public class SyncBatch extends AbstractEventProcessor
         }
         catch (Exception e)
         {
-            logger.error("Error preparing desktop sync clients. ", e);
+            logger.error("Error preparing overlapping syncs. ", e);
             throw e;
         }
     }

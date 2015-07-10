@@ -104,7 +104,7 @@ public class SubscriptionsBatch extends AbstractEventProcessor
             	long scheduledTime = System.currentTimeMillis();
 
         		// we assume that subscribers are a member of at least one site
-            	try(Stream<SubscriberData> subscribers = subscribersDataService.randomSubscribers(batchSize))
+            	try(Stream<SubscriberData> subscribers = subscribersDataService.randomSubscribers(batchSize*2))
             	{
             		List<Event> events = subscribers.map(sd -> {
             			String username = sd.getUsername();
@@ -112,15 +112,23 @@ public class SubscriptionsBatch extends AbstractEventProcessor
 
                 		SiteMemberData sm = siteDataService.randomSiteMember(null, DataCreationState.Created, username,
                 				SiteRole.SiteManager.toString(), SiteRole.SiteCollaborator.toString());
-                		String siteId = sm.getSiteId();
-
-                		logger.debug("Got site member data " + sm + " for user " + username);
-
-	            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
-	                	Event nextEvent = new Event(eventNameCreateSubscription, scheduledTime,
-	                			subscriptionData.toDBObject());
-	                	return nextEvent;
+                		if(sm != null)
+                		{
+	                		String siteId = sm.getSiteId();
+	
+	                		logger.debug("Got site member data " + sm + " for user " + username);
+	
+		            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
+		                	Event nextEvent = new Event(eventNameCreateSubscription, scheduledTime,
+		                			subscriptionData.toDBObject());
+		                	return nextEvent;
+                		}
+                		else
+                		{
+                			return null;
+                		}
             		})
+            		.filter(e -> e != null)
             		.collect(Collectors.toList());
 
         			subscriptionsCreated = events.size();

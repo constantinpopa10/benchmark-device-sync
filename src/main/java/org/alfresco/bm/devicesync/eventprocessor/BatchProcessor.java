@@ -30,6 +30,7 @@ public class BatchProcessor extends AbstractEventProcessor
     private final String eventNameSyncBatch;
     private final String eventNameCollectStatsBatch;
     private final String eventNameUploadFileBatch;
+    private final String eventNameUploadAndSyncBatch;
 
     /**
      * Constructor 
@@ -41,18 +42,21 @@ public class BatchProcessor extends AbstractEventProcessor
      * @param nextEventId_p                 ID of the next event
      */
     public BatchProcessor(String eventNameSubscribersBatch, String eventNameSubscriptionsBatch,
-    		String eventNameSyncBatch, String eventNameCollectStatsBatch, String eventNameUploadFileBatch)
+    		String eventNameSyncBatch, String eventNameCollectStatsBatch, String eventNameUploadFileBatch,
+    		String eventNameUploadAndSyncBatch)
     {
     	this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.eventNameSubscriptionsBatch = eventNameSubscriptionsBatch;
         this.eventNameSyncBatch = eventNameSyncBatch;
         this.eventNameCollectStatsBatch = eventNameCollectStatsBatch;
         this.eventNameUploadFileBatch = eventNameUploadFileBatch;
+        this.eventNameUploadAndSyncBatch = eventNameUploadAndSyncBatch;
 
         // validate arguments
         Util.checkArgumentNotNull(eventNameSubscribersBatch, "eventNameSubscribersBatch");
         Util.checkArgumentNotNull(eventNameSubscriptionsBatch, "eventNameSubscriptionsBatch");
         Util.checkArgumentNotNull(eventNameSyncBatch, "eventNameSyncBatch");
+        Util.checkArgumentNotNull(eventNameUploadAndSyncBatch, "eventNameUploadAndSyncBatch");
         Util.checkArgumentNotNull(eventNameCollectStatsBatch, "eventNameCollectStatsBatch");
     }
 
@@ -80,6 +84,12 @@ public class BatchProcessor extends AbstractEventProcessor
             {
 	            SyncBatchData data = new SyncBatchData(0);
 	            Event nextEvent = new Event(eventNameSyncBatch, time, data.toDBObject());
+	            nextEvents.add(nextEvent);
+            }
+
+            {
+	            SyncBatchData data = new SyncBatchData(0);
+	            Event nextEvent = new Event(eventNameUploadAndSyncBatch, time, data.toDBObject());
 	            nextEvents.add(nextEvent);
             }
 

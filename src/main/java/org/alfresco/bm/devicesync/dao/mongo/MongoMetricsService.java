@@ -1,6 +1,8 @@
 package org.alfresco.bm.devicesync.dao.mongo;
 
 import org.alfresco.bm.devicesync.dao.MetricsService;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -42,8 +44,14 @@ public class MongoMetricsService implements MetricsService, InitializingBean
     @Override
     public void addMetrics(DBObject syncMetrics, DBObject subsMetrics)
     {
+    	long timestamp = System.currentTimeMillis();
+    	LocalDateTime time = new LocalDateTime(timestamp, DateTimeZone.UTC);
+    	String formattedTime = time.toString();
+
     	DBObject insert = BasicDBObjectBuilder
-    			.start("sync", syncMetrics)
+    			.start("timestamp", timestamp)
+    			.add("time", formattedTime)
+    			.add("sync", syncMetrics)
     			.add("subs", subsMetrics)
     			.get();
     	collection.insert(insert);
