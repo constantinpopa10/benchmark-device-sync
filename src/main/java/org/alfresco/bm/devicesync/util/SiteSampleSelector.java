@@ -75,37 +75,63 @@ public class SiteSampleSelector
 
     public Stream<UploadFileData> getSubscriptions(int max)
     {
-		Stream<PathInfo> sites = nodesDataService.randomPaths(max);
-		Stream<UploadFileData> subscriptions = sites.map(pathInfo -> {
-			String siteId = pathInfo.getSiteId();
-			String path = pathInfo.getPath();
-			Integer numChildren = pathInfo.getNumChildren();
-			Integer numChildFolders = pathInfo.getNumChildFolders();
+//		Stream<PathInfo> sites = nodesDataService.randomPaths(max);
+//		Stream<UploadFileData> subscriptions = sites.map(pathInfo -> {
+//			String siteId = pathInfo.getSiteId();
+//			String path = pathInfo.getPath();
+//			Integer numChildren = pathInfo.getNumChildren();
+//			Integer numChildFolders = pathInfo.getNumChildFolders();
 
-			SubscriptionData subscriptionData = subscriptionsService.getRandomSubscriptionInSite(siteId);
-			UploadFileData uploadFileData = null;
-			if(subscriptionData != null)
-			{
-				String subscriberId = subscriptionData.getSubscriberId();
-				String subscriptionId = subscriptionData.getSubscriptionId();
-				String username = subscriptionData.getUsername();
-	
-				logger.debug("Random site " + siteId + ", subscription " + subscriptionData);
-	
-	        	Set<String> roles = new HashSet<>();
-	        	roles.add("SiteManager");
-	        	roles.add("SiteCollaborator");
-	        	SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
-	        	String siteRole = siteMemberData.getRole();
-	
-				uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
-						siteId, siteRole, path, numChildren, numChildFolders);
-			}
+    	Stream<SubscriptionData> subscriptions = subscriptionsService.getRandomSubscriptions(null, max);
+    	Stream<UploadFileData> ret = subscriptions.map(subscriptionData ->
+    	{
+    		String siteId = subscriptionData.getSiteId();
+    		String username = subscriptionData.getUsername();
+    		String subscriberId = subscriptionData.getSubscriberId();
+    		String subscriptionId = subscriptionData.getSubscriptionId();
 
-			return uploadFileData;
-		})
-		.filter(ufd -> ufd != null);
+    		logger.debug("Random site " + siteId + ", subscription " + subscriptionData);
 
-		return subscriptions;
+    		SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
+    		String siteRole = siteMemberData.getRole();
+
+    		PathInfo pathInfo = nodesDataService.randomFolderInSite(siteId);
+    		String path = pathInfo.getPath();
+    		Integer numChildren = pathInfo.getNumChildren();
+    		Integer numChildFolders = pathInfo.getNumChildFolders();
+
+    		UploadFileData uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
+    				siteId, siteRole, path, numChildren, numChildFolders);
+    		return uploadFileData;
+    	})
+    	.filter(ufd -> ufd != null);
+
+    	return ret;
+//
+//			SubscriptionData subscriptionData = subscriptionsService.getRandomSubscriptionInSite(siteId);
+//			UploadFileData uploadFileData = null;
+//			if(subscriptionData != null)
+//			{
+//				String subscriberId = subscriptionData.getSubscriberId();
+//				String subscriptionId = subscriptionData.getSubscriptionId();
+//				String username = subscriptionData.getUsername();
+//
+//				logger.debug("Random site " + siteId + ", subscription " + subscriptionData);
+//	
+//	        	Set<String> roles = new HashSet<>();
+//	        	roles.add("SiteManager");
+//	        	roles.add("SiteCollaborator");
+//	        	SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
+//	        	String siteRole = siteMemberData.getRole();
+//	
+//				uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
+//						siteId, siteRole, path, numChildren, numChildFolders);
+//			}
+//
+//			return uploadFileData;
+//		})
+//		.filter(ufd -> ufd != null);
+
+//		return subscriptions;
     }
 }

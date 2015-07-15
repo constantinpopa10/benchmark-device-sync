@@ -92,7 +92,7 @@ public class StartSync extends AbstractEventProcessor
 		    	super.resumeTimer();
 				StartSyncResponse response = alfresco.startSync(req, "-default-", subscriberId, subscriptionId);
 		    	super.suspendTimer();
-				String syncId = response.getSyncId();
+				long syncId = Long.valueOf(response.getSyncId());
 
 				logger.debug("response = " + response);
 

@@ -69,6 +69,8 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
 
         DBObject idxState = BasicDBObjectBuilder
                 .start(FIELD_STATE, 1)
+                .add(FIELD_RANDOMIZER, 2)
+                .add(FIELD_USERNAME, 3)
                 .get();
         DBObject optState = BasicDBObjectBuilder
                 .start("name", "idxState")
@@ -397,7 +399,7 @@ public class MongoSubscriptionsService implements SubscriptionsService, Initiali
             		.get();
         }
 
-    	DBCursor cur = collection.find(queryObj).sort(orderBy);
+    	DBCursor cur = collection.find(queryObj).sort(orderBy).limit(limit);
     	Stream<SubscriptionData> stream = StreamSupport.stream(cur.spliterator(), false)
     		.onClose(() -> cur.close())
     		.map(dbo -> SubscriptionData.fromDBObject(dbo)); // need to close cursor;

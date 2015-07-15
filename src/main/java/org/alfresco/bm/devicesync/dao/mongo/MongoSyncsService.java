@@ -103,7 +103,7 @@ public class MongoSyncsService implements SyncsService, InitializingBean
     	{
     		ObjectId objectId = (ObjectId)dbObject.get("_id");
     		String siteId = (String)dbObject.get(FIELD_SITE_ID);
-    		String syncId = (String)dbObject.get(FIELD_SYNC_ID);
+    		Long syncId = (Long)dbObject.get(FIELD_SYNC_ID);
     		String username = (String)dbObject.get(FIELD_USERNAME);
     		String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
     		String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);

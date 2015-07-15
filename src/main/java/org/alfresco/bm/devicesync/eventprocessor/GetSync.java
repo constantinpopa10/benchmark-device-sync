@@ -84,11 +84,13 @@ public class GetSync extends AbstractEventProcessor
     {
     	String subscriberId = syncData.getSubscriptionId();
     	String subscriptionId = syncData.getSubscriptionId();
-		String syncId = syncData.getSyncId();
+    	Long syncId = syncData.getSyncId();
 		int counter = syncData.getNumRetries();
 
+		long getSyncTime = System.currentTimeMillis();
+
     	super.resumeTimer();
-		GetChangesResponse response = alfresco.getSync("-default-", subscriberId, subscriptionId, syncId);
+		GetChangesResponse response = alfresco.getSync("-default-", subscriberId, subscriptionId, String.valueOf(syncId));
     	super.suspendTimer();
 
 		logger.debug("response = " + response);
@@ -96,20 +98,12 @@ public class GetSync extends AbstractEventProcessor
 		String status = response.getStatus();
 		switch(status)
 		{
-		case "not ready":
+		case "notReady":
 			if(counter < maxTries)
 			{
 				syncData.incrementRetries();
-				try
-                {
-	                Thread.sleep(timeBetweenGetSyncs);
-                }
-				catch (InterruptedException e)
-                {
-					// ok
-                }
-
-				Event event = new Event(this.getName(), System.currentTimeMillis() + timeBetweenGetSyncs, syncData.toDBObject());
+				long nextGetSyncTime = getSyncTime + timeBetweenGetSyncs;
+				Event event = new Event(this.getName(), nextGetSyncTime, syncData.toDBObject());
 				nextEvents.add(event);
 			}
 			else

@@ -42,7 +42,7 @@ public class MongoMetricsService implements MetricsService, InitializingBean
     }
 
     @Override
-    public void addMetrics(DBObject syncMetrics, DBObject subsMetrics)
+    public void addMetrics(DBObject syncMetrics, DBObject subsMetrics, DBObject activeMQStats)
     {
     	long timestamp = System.currentTimeMillis();
     	LocalDateTime time = new LocalDateTime(timestamp, DateTimeZone.UTC);
@@ -53,6 +53,7 @@ public class MongoMetricsService implements MetricsService, InitializingBean
     			.add("time", formattedTime)
     			.add("sync", syncMetrics)
     			.add("subs", subsMetrics)
+    			.add("activeMQ", activeMQStats)
     			.get();
     	collection.insert(insert);
     }

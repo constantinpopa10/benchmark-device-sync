@@ -26,6 +26,11 @@
          <constructor-arg name="socketTtlMs" value="${http.socket.ttlMs}" />
     </bean>
 
+    <bean id="activeMQMonitor" class="org.alfresco.bm.devicesync.util.ActiveMQMonitor">
+         <constructor-arg name="activeMQHost" value="${activemq.host}" />
+         <constructor-arg name="activeMQPort" value="${activemq.port}" />
+    </bean>
+
     <!--            -->
     <!-- DAO        -->
     <!--            -->
@@ -232,6 +237,7 @@
     <bean id="event.collectStats" class="org.alfresco.bm.devicesync.eventprocessor.CollectStats" parent="event.base">
         <constructor-arg name="publicApiFactory" ref="publicApiFactory" />
         <constructor-arg name="metricsService" ref="metricsService" />
+        <constructor-arg name="activeMQMonitor" ref="activeMQMonitor" />
     </bean>
 
     <bean id="event.subscribersBatch" class="org.alfresco.bm.devicesync.eventprocessor.SubscribersBatch" parent="event.base">
@@ -292,6 +298,7 @@
         <constructor-arg name="batchSize" value="${uploadAndSyncBatch.batchSize}" />
         <constructor-arg name="numBatches" value="${uploadAndSyncBatch.numBatches}" />
         <constructor-arg name="waitTimeBetweenBatches" value="${uploadAndSyncBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="waitTimeBetweenUploadAndSync" value="${uploadAndSyncBatch.waitTimeBetweenUploadAndSync}" />
         <constructor-arg name="eventNameStartSync" value="startSync" />
         <constructor-arg name="eventNameUploadFile" value="uploadFileForSubscription" />
         <property name="chart" value="false" />

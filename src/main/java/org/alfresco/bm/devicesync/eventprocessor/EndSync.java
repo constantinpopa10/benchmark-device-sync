@@ -74,11 +74,11 @@ public class EndSync extends AbstractEventProcessor
             String username = syncData.getUsername();
     		String subscriberId = syncData.getSubscriberId();
     		String subscriptionId = syncData.getSubscriptionId();
-    		String syncId = syncData.getSyncId();
+    		Long syncId = syncData.getSyncId();
     	    Alfresco alfresco = getAlfresco(username);
 
         	super.resumeTimer();
-			alfresco.endSync("-default-", subscriberId, subscriptionId, syncId);
+			alfresco.endSync("-default-", subscriberId, subscriptionId, String.valueOf(syncId));
 	    	super.suspendTimer();
 
 	    	subscriptionsService.incrementSubscriptionSyncs(subscriptionId);

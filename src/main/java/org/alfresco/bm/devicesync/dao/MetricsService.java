@@ -9,5 +9,5 @@ import com.mongodb.DBObject;
  */
 public interface MetricsService
 {
-	void addMetrics(DBObject syncMetrics, DBObject subsMetrics);
+	void addMetrics(DBObject syncMetrics, DBObject subsMetrics, DBObject activeMQStats);
 }

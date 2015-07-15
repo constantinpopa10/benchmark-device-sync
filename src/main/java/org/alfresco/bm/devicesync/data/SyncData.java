@@ -39,7 +39,7 @@ public class SyncData implements Serializable
 	private String subscriberId;
 	private String subscriptionId;
 	private String siteId;
-	private String syncId;
+	private Long syncId;
 	private String result;
 	private String msg;
 	private List<Change> changes;
@@ -50,13 +50,13 @@ public class SyncData implements Serializable
     }
 
 	public SyncData(String siteId, String username, String subscriberId, String subscriptionId,
-			String syncId, Long endTime)
+			Long syncId, Long endTime)
     {
 	    this(null, siteId, username, subscriberId, subscriptionId, syncId, -1, 0, false, endTime, "Get sync " + syncId);
     }
 
 	public SyncData(ObjectId objectId, String siteId, String username, String subscriberId, String subscriptionId,
-			String syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg)
+			Long syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg)
     {
 	    super();
     	this.msg = msg;
@@ -114,7 +114,7 @@ public class SyncData implements Serializable
 	{
 		return subscriptionId;
 	}
-	public String getSyncId()
+	public Long getSyncId()
 	{
 		return syncId;
 	}
@@ -172,7 +172,7 @@ public class SyncData implements Serializable
     	String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
     	String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
     	String siteId = (String)dbObject.get(FIELD_SITE_ID);
-    	String syncId = (String)dbObject.get(FIELD_SYNC_ID);
+    	Long syncId = (Long)dbObject.get(FIELD_SYNC_ID);
     	int numSyncChanges = (Integer)dbObject.get(FIELD_NUM_SYNC_CHANGES);
     	int numRetries = (Integer)dbObject.get(FIELD_NUM_RETRIES);
     	boolean maximumRetriesHit = (Boolean)dbObject.get(FIELD_MAX_RETRIES_HIT);

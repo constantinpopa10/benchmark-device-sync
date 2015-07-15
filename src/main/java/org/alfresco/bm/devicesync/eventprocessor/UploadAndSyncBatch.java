@@ -39,6 +39,7 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
 
     private final int batchSize;
     private final int numBatches;
+    private final int waitTimeBetweenUploadAndSync; // ms
     private final int waitTimeBetweenBatches; // ms
 
     private final SiteSampleSelector siteSampleSelector;
@@ -56,14 +57,15 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
      * @param nextEventId_p                 ID of the next event
      */
     public UploadAndSyncBatch(SubscriptionsService subscriptionsService, SiteSampleSelector siteSampleSelector,
-    		int batchSize, int numBatches, int waitTimeBetweenBatches, String eventNameStartSync,
-    		String eventNameUploadFile)
+    		int batchSize, int numBatches, int waitTimeBetweenBatches, int waitTimeBetweenUploadAndSync,
+    		String eventNameStartSync, String eventNameUploadFile)
     {
     	this.subscriptionsService = subscriptionsService;
     	this.siteSampleSelector = siteSampleSelector;
     	this.batchSize = batchSize;
         this.numBatches = numBatches;
         this.eventNameStartSync = eventNameStartSync;
+        this.waitTimeBetweenUploadAndSync = waitTimeBetweenUploadAndSync;
         this.waitTimeBetweenBatches = waitTimeBetweenBatches;
         this.eventNameUploadFile = eventNameUploadFile;
 
@@ -95,7 +97,7 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
             }
             else
             {
-        		long scheduledTime = System.currentTimeMillis();
+        		long uploadScheduledTime = System.currentTimeMillis();
 
         		try(Stream<UploadFileData> subscriptions = siteSampleSelector.getSubscriptions(batchSize))
         		{
@@ -103,7 +105,7 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
         			{
 	                	List<Event> ret = new LinkedList<>();
 
-	                	Event uploadFileEvent = new Event(eventNameUploadFile, scheduledTime,
+	                	Event uploadFileEvent = new Event(eventNameUploadFile, uploadScheduledTime,
 	                			ufd.toDBObject());
 	                	ret.add(uploadFileEvent);
 
@@ -111,7 +113,7 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
                 				ufd.getUsername(),
                 				ufd.getSubscriberId(),
                 				ufd.getSubscriptionId(), null);
-                    	Event syncEvent = new Event(eventNameStartSync, scheduledTime + 500,
+                    	Event syncEvent = new Event(eventNameStartSync, uploadScheduledTime + waitTimeBetweenUploadAndSync,
                     			syncData.toDBObject());
                     	ret.add(syncEvent);
 
@@ -124,7 +126,7 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
 
             	{
 	            	SyncBatchData newSyncBatchData = new SyncBatchData(count + 1, sites);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime + waitTimeBetweenBatches,
+	            	Event nextEvent = new Event(event.getName(), uploadScheduledTime + waitTimeBetweenBatches,
 	            			newSyncBatchData.toDBObject());
 	            	nextEvents.add(nextEvent);
             	}
