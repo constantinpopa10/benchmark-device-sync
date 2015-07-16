@@ -158,6 +158,7 @@ public class SyncData implements Serializable
     public void incrementRetries()
     {
     	numRetries++;
+    	this.msg = "Get sync " + syncId + " not ready, need to retry";
     }
 
     public List<Change> getChanges()
