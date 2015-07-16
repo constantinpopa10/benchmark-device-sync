@@ -79,7 +79,7 @@ public class GetSync extends AbstractEventProcessor
     	return alfresco;
     }
 
-    private void getSync(Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
+    private void getSync(String getSyncEventName, Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
     		throws JsonParseException, JsonMappingException, IOException
     {
     	String subscriberId = syncData.getSubscriptionId();
@@ -103,7 +103,7 @@ public class GetSync extends AbstractEventProcessor
 			{
 				syncData.incrementRetries();
 				long nextGetSyncTime = getSyncTime + timeBetweenGetSyncs;
-				Event event = new Event(this.getName(), nextGetSyncTime, syncData.toDBObject());
+				Event event = new Event(getSyncEventName, nextGetSyncTime, syncData.toDBObject());
 				nextEvents.add(event);
 			}
 			else
@@ -160,7 +160,7 @@ public class GetSync extends AbstractEventProcessor
 
             List<Event> nextEvents = new LinkedList<Event>();
 
-			getSync(alfresco, syncData, nextEvents);
+			getSync(event.getName(), alfresco, syncData, nextEvents);
 
             return new EventResult(syncData.toDBObject(), nextEvents);
         }
