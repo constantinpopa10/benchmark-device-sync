@@ -96,12 +96,17 @@ public class SiteSampleSelector
     		String siteRole = siteMemberData.getRole();
 
     		PathInfo pathInfo = nodesDataService.randomFolderInSite(siteId);
-    		String path = pathInfo.getPath();
-    		Integer numChildren = pathInfo.getNumChildren();
-    		Integer numChildFolders = pathInfo.getNumChildFolders();
+    		UploadFileData uploadFileData = null;
+    		if(pathInfo != null)
+    		{
+	    		String path = pathInfo.getPath();
+	    		Integer numChildren = pathInfo.getNumChildren();
+	    		Integer numChildFolders = pathInfo.getNumChildFolders();
+	
+	    		uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
+	    				siteId, siteRole, path, numChildren, numChildFolders);
+    		}
 
-    		UploadFileData uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
-    				siteId, siteRole, path, numChildren, numChildFolders);
     		return uploadFileData;
     	})
     	.filter(ufd -> ufd != null);
