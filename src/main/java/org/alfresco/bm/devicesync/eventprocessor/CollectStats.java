@@ -3,15 +3,16 @@ package org.alfresco.bm.devicesync.eventprocessor;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.alfresco.bm.devicesync.dao.MetricsService;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor.ActiveMQStats;
+import org.alfresco.bm.devicesync.util.ActiveMQMonitor.BrokerStats;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor.DestinationStats;
 import org.alfresco.bm.devicesync.util.PublicApiFactory;
 import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
+import org.alfresco.monitoring.dao.MetricsService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.social.alfresco.api.Alfresco;
@@ -64,19 +65,38 @@ public class CollectStats extends AbstractEventProcessor
     		.add("avgEnqueueTime", stats.getAverageEnqueueTime())
     		.add("enqueueCount", stats.getEnqueueCount())
     		.add("dequeueCount", stats.getDequeueCount())
-    		.add("dispatchCount", stats.getDispatchCount());
+    		.add("queueSize", stats.getQueueSize())
+    		.add("avgBlockedTime", stats.getAverageBlockedTime())
+    		.add("maxEnqueueTime", stats.getMaxEnqueueTime())
+    		.add("blockedSends", stats.getBlockedSends())
+    		.add("dispatchCount", stats.getDispatchCount())
+    		.add("memoryPercentUsage", stats.getMemoryPercentUsage());
+    	return builder.get();
+    }
+
+    private DBObject toDBObject(BrokerStats stats)
+    {
+    	BasicDBObjectBuilder builder = BasicDBObjectBuilder
+    			.start("memPercentUsage", stats.getMemoryPercentUsage())
+    			.add("storePercentUsage", stats.getStorePercentUsage())
+    			.add("tempPercentUsage", stats.getTempPercentUsage());
     	return builder.get();
     }
 
     private DBObject toDBObject(ActiveMQStats stats)
     {
-    	List<DBObject> list = new LinkedList<>();
+    	BasicDBObjectBuilder destStatsBuilder = BasicDBObjectBuilder.start();
+    	BrokerStats brokerStats = stats.getBrokerStats();
     	for(DestinationStats destStats : stats.getDestinationStats())
     	{
-    		list.add(toDBObject(destStats));
+    		DBObject destStatsDBObject = toDBObject(destStats);
+    		String destinationName = destStats.getDestinationName().replaceAll("\\.", "-");
+    		destStatsBuilder.add(destinationName, destStatsDBObject);
     	}
+    	DBObject brokerStatsDBObject = toDBObject(brokerStats);
     	BasicDBObjectBuilder builder = BasicDBObjectBuilder
-    			.start("stats", list);
+    			.start("brokerStats", brokerStatsDBObject)
+    			.add("destinationStats", destStatsBuilder.get());
     	return builder.get();
     }
 
@@ -92,10 +112,10 @@ public class CollectStats extends AbstractEventProcessor
     		super.resumeTimer();
     		String syncMetrics = alfresco.syncMetrics("-default-");
     		String subsMetrics = alfresco.subsMetrics("-default-");
-    		ActiveMQStats stats = activeMQMonitor.getStats();
+    		ActiveMQStats activeMQStats = activeMQMonitor.getStats();
     		super.suspendTimer();
 
-    		DBObject activeMQStatsDBObject = toDBObject(stats);
+    		DBObject activeMQStatsDBObject = toDBObject(activeMQStats);
     		DBObject syncDBObject = (DBObject)JSON.parse(syncMetrics);
     		DBObject subsDBObject = (DBObject)JSON.parse(subsMetrics);
 

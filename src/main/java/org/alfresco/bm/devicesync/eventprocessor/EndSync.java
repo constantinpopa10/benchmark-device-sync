@@ -1,7 +1,6 @@
 package org.alfresco.bm.devicesync.eventprocessor;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collections;
 
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
 import org.alfresco.bm.devicesync.data.SyncData;
@@ -11,7 +10,9 @@ import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.social.alfresco.api.Alfresco;
+import org.springframework.web.client.HttpClientErrorException;
 
 import com.mongodb.DBObject;
 
@@ -68,13 +69,14 @@ public class EndSync extends AbstractEventProcessor
 
     	DBObject dbObject = (DBObject)event.getData();
     	SyncData syncData = SyncData.fromDBObject(dbObject);
+		Long syncId = syncData.getSyncId();
 
         try
         {
             String username = syncData.getUsername();
     		String subscriberId = syncData.getSubscriberId();
     		String subscriptionId = syncData.getSubscriptionId();
-    		Long syncId = syncData.getSyncId();
+
     	    Alfresco alfresco = getAlfresco(username);
 
         	super.resumeTimer();
@@ -85,11 +87,26 @@ public class EndSync extends AbstractEventProcessor
 
 	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
 	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),
-	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId);
+	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId,
+	    			syncData.isGotResults());
 
-            List<Event> nextEvents = new LinkedList<Event>();
-
-            return new EventResult(data.toDBObject(), nextEvents);
+            return new EventResult(data.toDBObject(), Collections.emptyList());
+        }
+        catch(HttpClientErrorException e)
+        {
+        	if(e.getStatusCode().equals(HttpStatus.NOT_FOUND))
+        	{
+    	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
+    	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),
+    	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId
+    	    			+ " (syncId not found)", syncData.isGotResults());
+        		return new EventResult(data.toDBObject(), Collections.emptyList());
+        	}
+        	else
+        	{
+                logger.error("Exception occurred during event processing", e);
+                throw e;
+        	}
         }
         catch (Exception e)
         {

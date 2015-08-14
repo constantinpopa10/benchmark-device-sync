@@ -16,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.social.alfresco.api.Alfresco;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -42,6 +43,8 @@ public class GetSync extends AbstractEventProcessor
     private final boolean getFilesEnabled;
     private final String eventNameEndSync;
     private final String eventNameGetFile;
+
+	private final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Constructor
@@ -79,9 +82,11 @@ public class GetSync extends AbstractEventProcessor
     	return alfresco;
     }
 
-    private void getSync(String getSyncEventName, Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
+    private boolean getSync(String getSyncEventName, Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
     		throws JsonParseException, JsonMappingException, IOException
     {
+        boolean success = true;
+
     	String subscriberId = syncData.getSubscriptionId();
     	String subscriptionId = syncData.getSubscriptionId();
     	Long syncId = syncData.getSyncId();
@@ -90,12 +95,14 @@ public class GetSync extends AbstractEventProcessor
 		long getSyncTime = System.currentTimeMillis();
 
     	super.resumeTimer();
-		GetChangesResponse response = alfresco.getSync("-default-", subscriberId, subscriptionId, String.valueOf(syncId));
+		String response = alfresco.getSyncRaw("-default-", subscriberId, subscriptionId, String.valueOf(syncId));
     	super.suspendTimer();
+
+    	GetChangesResponse getSyncResponse = mapper.readValue(response, GetChangesResponse.class);
 
 		logger.debug("response = " + response);
 
-		String status = response.getStatus();
+		String status = getSyncResponse.getStatus();
 		switch(status)
 		{
 		case "notReady":
@@ -108,11 +115,18 @@ public class GetSync extends AbstractEventProcessor
 			}
 			else
 			{
+			    // regard this as a fail
+			    success = false;
+
 				syncData.maxRetriesHit();
+
+				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
+	            Event nextEvent = new Event(eventNameEndSync, scheduledTime, syncData.toDBObject());
+	        	nextEvents.add(nextEvent);
 			}
-			break;
+			break; 
 		case "ready":
-			syncData.gotResults(response.getChanges());
+			syncData.gotResults(getSyncResponse.getChanges());
 
             String username = syncData.getUsername();
 	    	int numSyncChanges = syncData.getNumSyncChanges();
@@ -143,6 +157,8 @@ public class GetSync extends AbstractEventProcessor
 			break;
 		default:
 		}
+
+		return success;
     }
 
     @Override
@@ -160,9 +176,9 @@ public class GetSync extends AbstractEventProcessor
 
             List<Event> nextEvents = new LinkedList<Event>();
 
-			getSync(event.getName(), alfresco, syncData, nextEvents);
+			boolean success = getSync(event.getName(), alfresco, syncData, nextEvents);
 
-            return new EventResult(syncData.toDBObject(), nextEvents);
+            return new EventResult(syncData.toDBObject(), nextEvents, success);
         }
         catch (Exception e)
         {

@@ -1,10 +1,8 @@
 package org.alfresco.bm.devicesync.util;
 
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.alfresco.bm.data.DataCreationState;
@@ -75,13 +73,6 @@ public class SiteSampleSelector
 
     public Stream<UploadFileData> getSubscriptions(int max)
     {
-//		Stream<PathInfo> sites = nodesDataService.randomPaths(max);
-//		Stream<UploadFileData> subscriptions = sites.map(pathInfo -> {
-//			String siteId = pathInfo.getSiteId();
-//			String path = pathInfo.getPath();
-//			Integer numChildren = pathInfo.getNumChildren();
-//			Integer numChildFolders = pathInfo.getNumChildFolders();
-
     	Stream<SubscriptionData> subscriptions = subscriptionsService.getRandomSubscriptions(null, max);
     	Stream<UploadFileData> ret = subscriptions.map(subscriptionData ->
     	{
@@ -95,16 +86,20 @@ public class SiteSampleSelector
     		SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
     		String siteRole = siteMemberData.getRole();
 
-    		PathInfo pathInfo = nodesDataService.randomFolderInSite(siteId);
+    		PathInfo pathInfo = nodesDataService.randomNodeInSite(siteId);
     		UploadFileData uploadFileData = null;
     		if(pathInfo != null)
     		{
 	    		String path = pathInfo.getPath();
 	    		Integer numChildren = pathInfo.getNumChildren();
 	    		Integer numChildFolders = pathInfo.getNumChildFolders();
+	    		String nodeType = pathInfo.getNodeType();
+	    		String nodeId = pathInfo.getNodeId();
+	    		List<List<String>> parentNodeIds = pathInfo.getParentNodeIds();
 	
 	    		uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
-	    				siteId, siteRole, path, numChildren, numChildFolders);
+	    				siteId, siteRole, path, numChildren, numChildFolders, nodeId, nodeType,
+	    				parentNodeIds);
     		}
 
     		return uploadFileData;
@@ -112,31 +107,5 @@ public class SiteSampleSelector
     	.filter(ufd -> ufd != null);
 
     	return ret;
-//
-//			SubscriptionData subscriptionData = subscriptionsService.getRandomSubscriptionInSite(siteId);
-//			UploadFileData uploadFileData = null;
-//			if(subscriptionData != null)
-//			{
-//				String subscriberId = subscriptionData.getSubscriberId();
-//				String subscriptionId = subscriptionData.getSubscriptionId();
-//				String username = subscriptionData.getUsername();
-//
-//				logger.debug("Random site " + siteId + ", subscription " + subscriptionData);
-//	
-//	        	Set<String> roles = new HashSet<>();
-//	        	roles.add("SiteManager");
-//	        	roles.add("SiteCollaborator");
-//	        	SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
-//	        	String siteRole = siteMemberData.getRole();
-//	
-//				uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
-//						siteId, siteRole, path, numChildren, numChildFolders);
-//			}
-//
-//			return uploadFileData;
-//		})
-//		.filter(ufd -> ufd != null);
-
-//		return subscriptions;
     }
 }

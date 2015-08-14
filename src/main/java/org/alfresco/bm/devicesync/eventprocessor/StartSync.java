@@ -13,6 +13,7 @@ import org.alfresco.bm.session.SessionService;
 import org.alfresco.service.synchronization.api.StartSyncRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.social.alfresco.api.Alfresco;
 import org.springframework.social.alfresco.api.entities.StartSyncResponse;
 
@@ -36,6 +37,8 @@ public class StartSync extends AbstractEventProcessor
     private final SessionService sessionService;
     private final PublicApiFactory publicApiFactory;
     private final int timeBetweenSyncOps;
+
+	private final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Constructor
@@ -90,22 +93,24 @@ public class StartSync extends AbstractEventProcessor
 
 				StartSyncRequest req = new StartSyncRequest(Collections.emptyList());
 		    	super.resumeTimer();
-				StartSyncResponse response = alfresco.startSync(req, "-default-", subscriberId, subscriptionId);
+				String response = alfresco.startSyncRaw(req, "-default-", subscriberId, subscriptionId);
 		    	super.suspendTimer();
-				long syncId = Long.valueOf(response.getSyncId());
+
+		        StartSyncResponse syncResponse = mapper.readValue(response, StartSyncResponse.class);
+				long syncId = Long.valueOf(syncResponse.getSyncId());
 
 				logger.debug("response = " + response);
 
 				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), syncId, 0, 0, false, endTime, "Started sync " + syncId);
+						syncData.getSubscriptionId(), syncId, 0, 0, false, endTime, "Started sync " + syncId, false);
 	            Event nextEvent = new Event("getSync", scheduledTime, syncData.toDBObject());
 	        	nextEvents.add(nextEvent);
         	}
         	else
         	{
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), null, 0, 0, false, endTime, "Start sync end time reached");
+						syncData.getSubscriptionId(), null, 0, 0, false, endTime, "Start sync end time reached", false);
         	}
 
             return new EventResult(syncData.toDBObject(), nextEvents);

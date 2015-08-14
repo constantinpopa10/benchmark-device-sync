@@ -27,9 +27,11 @@ public class SyncData implements Serializable
 	public static String FIELD_NUM_RETRIES = "numRetries";
 	public static String FIELD_END_TIME = "endTime";
 	public static String FIELD_COUNT = "count";
+	public static String FIELD_GOT_RESULTS = "gotResults";
 
 	private static final long serialVersionUID = 946578159221599841L;
 
+	private boolean gotResults = false;
 	private Long endTime;
 	private int numSyncChanges = 0;
 	private int numRetries = 0;
@@ -46,17 +48,19 @@ public class SyncData implements Serializable
 
 	public SyncData(String siteId, String username, String subscriberId, String subscriptionId, Long endTime)
     {
-	    this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0, false, endTime, null);
+	    this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0, false, endTime, null, false);
     }
 
-	public SyncData(String siteId, String username, String subscriberId, String subscriptionId,
-			Long syncId, Long endTime)
-    {
-	    this(null, siteId, username, subscriberId, subscriptionId, syncId, -1, 0, false, endTime, "Get sync " + syncId);
-    }
+//	public SyncData(String siteId, String username, String subscriberId, String subscriptionId,
+//			Long syncId, Long endTime)
+//    {
+//	    this(null, siteId, username, subscriberId, subscriptionId, syncId, -1, 0, false, endTime, "Get sync " + syncId,
+//	    		false);
+//    }
 
 	public SyncData(ObjectId objectId, String siteId, String username, String subscriberId, String subscriptionId,
-			Long syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg)
+			Long syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg,
+			Boolean gotResults)
     {
 	    super();
     	this.msg = msg;
@@ -70,7 +74,13 @@ public class SyncData implements Serializable
 	    this.numSyncChanges = numSyncChanges;
 	    this.numRetries = numRetries;
 	    this.maximumRetriesHit = maximumRetriesHit;
+	    this.gotResults = (gotResults != null ? gotResults.booleanValue() : false);
     }
+
+	public boolean isGotResults()
+	{
+		return gotResults;
+	}
 
 	public String getSiteId()
 	{
@@ -133,6 +143,7 @@ public class SyncData implements Serializable
         		.add(FIELD_NUM_RETRIES, getNumRetries())
         		.add(FIELD_MAX_RETRIES_HIT, isMaximumRetriesHit())
         		.add(FIELD_NUM_SYNC_CHANGES, getNumSyncChanges())
+        		.add(FIELD_GOT_RESULTS, gotResults)
         		.add(FIELD_MSG, msg);
     	if(getSubscriptionId() != null)
     	{
@@ -147,6 +158,7 @@ public class SyncData implements Serializable
     	this.changes = changes;
     	this.numSyncChanges = changes.size();
     	this.msg = "Get sync " + syncId + " successful";
+    	this.gotResults = true;
     }
 
     public void maxRetriesHit()
@@ -178,9 +190,10 @@ public class SyncData implements Serializable
     	int numRetries = (Integer)dbObject.get(FIELD_NUM_RETRIES);
     	boolean maximumRetriesHit = (Boolean)dbObject.get(FIELD_MAX_RETRIES_HIT);
     	Long endTime = (Long)dbObject.get(FIELD_END_TIME);
+    	Boolean gotResults = (Boolean)dbObject.get(FIELD_GOT_RESULTS);
     	String msg = (String)dbObject.get("msg");
     	SyncData syncData = new SyncData(id, siteId, username, subscriberId, subscriptionId, syncId, numSyncChanges,
-    			numRetries, maximumRetriesHit, endTime, msg);
+    			numRetries, maximumRetriesHit, endTime, msg, gotResults);
     	return syncData;
     }
 }

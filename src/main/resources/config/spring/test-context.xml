@@ -5,10 +5,40 @@
           http://www.springframework.org/schema/context/spring-context-3.0.xsd
           http://www.springframework.org/schema/data/mongo
           http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
-          http://www.springframework.org/schema/beans
-          http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+          http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+          http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
     <!-- alfresco-benchmark-tests-device-sync : -->
+
+    <!-- Messaging -->
+ 
+    <import resource="classpath:services-common-messaging-context.xml"/>
+
+    <bean id="camelRequiredTxn" class="org.apache.camel.spring.spi.SpringTransactionPolicy">
+      <property name="transactionManager" ref="messagingTransactionManager"/>
+      <property name="propagationBehaviorName" value="PROPAGATION_REQUIRED"/>
+    </bean>
+
+    <bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="connectionFactory" ref="messagingConnectionFactory" />
+        <property name="transacted" value="true" />
+        <property name="transactionManager" ref="messagingTransactionManager" />
+    </bean>
+
+   <camelContext xmlns="http://camel.apache.org/schema/spring" id="alfrescoServiceCamelContext"> 
+      <contextScan/>
+
+      <template id="camelProducerTemplate"
+            defaultEndpoint="direct:alfresco.default" />
+
+      <endpoint id="nodes" uri="${sync.camel.endpoint.nodes}"/>
+
+      <route>
+          <from uri="direct-vm:bm.nodes" />
+          <marshal><custom ref="defaultDataFormatDef" /></marshal>
+          <to uri="ref:nodes" />
+      </route>
+   </camelContext>
 
     <!-- Import any application contexts for test runs -->
     <import resource="classpath:config/spring/test-common-context.xml" />
@@ -69,7 +99,7 @@
         <constructor-arg name="collection" value="${mirror.syncs}" />
     </bean>
 
-    <bean id="metricsService" class="org.alfresco.bm.devicesync.dao.mongo.MongoMetricsService">
+    <bean id="metricsService" class="org.alfresco.monitoring.dao.mongo.MongoMetricsService">
         <constructor-arg name="db" ref="testMongoDB" />
         <constructor-arg name="collection" value="${testRunFqn}.${syncMetrics}" />
     </bean>
@@ -141,13 +171,24 @@
         <constructor-arg name="ftpPath" value="${files.ftp.path}" />
     </bean>
 
-    <bean id="uploadFileHelper" class="org.alfresco.bm.devicesync.util.UploadFileHelper">
+    <bean id="cmisUploadFileHelper" class="org.alfresco.bm.devicesync.util.CMISUploadFileHelper">
         <constructor-arg name="testFileService" ref="testFileService" />
         <constructor-arg name="nodesDataService" ref="nodesDataService" />
-        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
         <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
+    </bean>
+
+    <bean id="spoofUploadFileHelper" class="org.alfresco.bm.devicesync.util.SpoofUploadFileHelper">
+        <constructor-arg name="testFileService" ref="testFileService" />
+        <constructor-arg name="nodesDataService" ref="nodesDataService" />
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="messageProducer">
+            <bean class="org.gytheio.messaging.camel.CamelMessageProducer">
+                <property name="producer" ref="camelProducerTemplate" />
+                <property name="endpoint" value="direct-vm:bm.nodes" />
+            </bean>
+        </constructor-arg>
     </bean>
 
     <bean id="downloadFileHelper" class="org.alfresco.bm.devicesync.util.DownloadFileHelper">
@@ -337,7 +378,7 @@
 
     <bean id="event.uploadFileForSubscription" class="org.alfresco.bm.devicesync.eventprocessor.UploadFileForSubscription" parent="event.base">
         <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
-        <constructor-arg name="uploadFileHelper" ref="uploadFileHelper" />
+        <constructor-arg name="uploadFileHelper" ref="spoofUploadFileHelper" />
     </bean>
 
     <bean id="event.uploadFileBatch" class="org.alfresco.bm.devicesync.eventprocessor.UploadFileBatch" parent="event.base">
