@@ -87,8 +87,8 @@ public class EndSync extends AbstractEventProcessor
 
 	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
 	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),
-	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId,
-	    			syncData.isGotResults());
+	    			syncData.getNumRetries(), syncData.getFinalNumRetries(), syncData.isMaximumRetriesHit(),
+	    			syncData.getEndTime(), "Ended sync " + syncId, syncData.isGotResults());
 
             return new EventResult(data.toDBObject(), Collections.emptyList());
         }
@@ -98,8 +98,8 @@ public class EndSync extends AbstractEventProcessor
         	{
     	    	SyncData data = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
     	    			syncData.getSubscriptionId(), syncData.getSyncId(), syncData.getNumSyncChanges(),
-    	    			syncData.getNumRetries(), syncData.isMaximumRetriesHit(), syncData.getEndTime(), "Ended sync " + syncId
-    	    			+ " (syncId not found)", syncData.isGotResults());
+    	    			syncData.getNumRetries(), syncData.getFinalNumRetries(), syncData.isMaximumRetriesHit(),
+    	    			syncData.getEndTime(), "Ended sync " + syncId + " (syncId not found)", syncData.isGotResults());
         		return new EventResult(data.toDBObject(), Collections.emptyList());
         	}
         	else

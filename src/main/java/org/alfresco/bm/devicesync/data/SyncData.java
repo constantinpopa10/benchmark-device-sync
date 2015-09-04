@@ -9,6 +9,11 @@ import org.bson.types.ObjectId;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
+/**
+ * 
+ * @author sglover
+ *
+ */
 public class SyncData implements Serializable
 {
 	public static String FIELD_SITE_ID = "siteId";
@@ -25,9 +30,11 @@ public class SyncData implements Serializable
 	public static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
 	public static String FIELD_MSG = "msg";
 	public static String FIELD_NUM_RETRIES = "numRetries";
+	public static String FIELD_FINAL_NUM_RETRIES = "finalNumRetries";
 	public static String FIELD_END_TIME = "endTime";
 	public static String FIELD_COUNT = "count";
 	public static String FIELD_GOT_RESULTS = "gotResults";
+	public static String FIELD_RESULT = "result";
 
 	private static final long serialVersionUID = 946578159221599841L;
 
@@ -35,6 +42,7 @@ public class SyncData implements Serializable
 	private Long endTime;
 	private int numSyncChanges = 0;
 	private int numRetries = 0;
+	private int finalNumRetries = 0;
 	private boolean maximumRetriesHit = false;
 	private ObjectId objectId;
 	private String username;
@@ -48,19 +56,12 @@ public class SyncData implements Serializable
 
 	public SyncData(String siteId, String username, String subscriberId, String subscriptionId, Long endTime)
     {
-	    this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0, false, endTime, null, false);
+	    this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0, 0, false, endTime, null, false);
     }
 
-//	public SyncData(String siteId, String username, String subscriberId, String subscriptionId,
-//			Long syncId, Long endTime)
-//    {
-//	    this(null, siteId, username, subscriberId, subscriptionId, syncId, -1, 0, false, endTime, "Get sync " + syncId,
-//	    		false);
-//    }
-
 	public SyncData(ObjectId objectId, String siteId, String username, String subscriberId, String subscriptionId,
-			Long syncId, int numSyncChanges, int numRetries, boolean maximumRetriesHit, Long endTime, String msg,
-			Boolean gotResults)
+			Long syncId, int numSyncChanges, int numRetries, int finalNumRetries, boolean maximumRetriesHit, Long endTime,
+			String msg, Boolean gotResults)
     {
 	    super();
     	this.msg = msg;
@@ -73,6 +74,7 @@ public class SyncData implements Serializable
 	    this.endTime = endTime;
 	    this.numSyncChanges = numSyncChanges;
 	    this.numRetries = numRetries;
+	    this.finalNumRetries = finalNumRetries;
 	    this.maximumRetriesHit = maximumRetriesHit;
 	    this.gotResults = (gotResults != null ? gotResults.booleanValue() : false);
     }
@@ -102,7 +104,12 @@ public class SyncData implements Serializable
 		return numRetries;
 	}
 
-	public boolean isMaximumRetriesHit()
+	public int getFinalNumRetries()
+    {
+        return finalNumRetries;
+    }
+
+    public boolean isMaximumRetriesHit()
 	{
 		return maximumRetriesHit;
 	}
@@ -141,10 +148,12 @@ public class SyncData implements Serializable
         		.add(FIELD_SITE_ID, getSiteId())
         		.add(FIELD_SYNC_ID, getSyncId())
         		.add(FIELD_NUM_RETRIES, getNumRetries())
+                .add(FIELD_FINAL_NUM_RETRIES, getFinalNumRetries())
         		.add(FIELD_MAX_RETRIES_HIT, isMaximumRetriesHit())
         		.add(FIELD_NUM_SYNC_CHANGES, getNumSyncChanges())
         		.add(FIELD_GOT_RESULTS, gotResults)
-        		.add(FIELD_MSG, msg);
+        		.add(FIELD_MSG, msg)
+        		.add(FIELD_RESULT, result);
     	if(getSubscriptionId() != null)
     	{
     		builder.add(FIELD_SUBSCRIPTION_ID, getSubscriptionId());
@@ -153,12 +162,13 @@ public class SyncData implements Serializable
     	return dbObject;
     }
 
-    public void gotResults(List<Change> changes)
+    public void gotResults(List<Change> changes, String message)
     {
+        this.msg = "Get sync " + syncId + ", " + message;
     	this.changes = changes;
     	this.numSyncChanges = changes.size();
-    	this.msg = "Get sync " + syncId + " successful";
     	this.gotResults = true;
+    	this.finalNumRetries = numRetries;
     }
 
     public void maxRetriesHit()
@@ -167,9 +177,10 @@ public class SyncData implements Serializable
     	this.msg = "Get sync " + syncId + " max retries hit";
     }
 
-    public void incrementRetries()
+    public void incrementRetries(String result)
     {
     	numRetries++;
+    	this.result = result;
     	this.msg = "Get sync " + syncId + " not ready, need to retry";
     }
 
@@ -188,12 +199,13 @@ public class SyncData implements Serializable
     	Long syncId = (Long)dbObject.get(FIELD_SYNC_ID);
     	int numSyncChanges = (Integer)dbObject.get(FIELD_NUM_SYNC_CHANGES);
     	int numRetries = (Integer)dbObject.get(FIELD_NUM_RETRIES);
+        int finalNumRetries = (Integer)dbObject.get(FIELD_FINAL_NUM_RETRIES);
     	boolean maximumRetriesHit = (Boolean)dbObject.get(FIELD_MAX_RETRIES_HIT);
     	Long endTime = (Long)dbObject.get(FIELD_END_TIME);
     	Boolean gotResults = (Boolean)dbObject.get(FIELD_GOT_RESULTS);
     	String msg = (String)dbObject.get("msg");
     	SyncData syncData = new SyncData(id, siteId, username, subscriberId, subscriptionId, syncId, numSyncChanges,
-    			numRetries, maximumRetriesHit, endTime, msg, gotResults);
+    			numRetries, finalNumRetries, maximumRetriesHit, endTime, msg, gotResults);
     	return syncData;
     }
 }

@@ -108,7 +108,7 @@ public class MongoSyncsService implements SyncsService, InitializingBean
     		String subscriberId = (String)dbObject.get(FIELD_SUBSCRIBER_ID);
     		String subscriptionId = (String)dbObject.get(FIELD_SUBSCRIPTION_ID);
     		SyncData subscription = new SyncData(objectId, siteId, username, subscriberId, subscriptionId, syncId,
-    				-1, -1, false, null, null, false);
+    				-1, -1, 0, false, null, null, false);
     		syncs.add(subscription);
     	}
 

@@ -82,83 +82,98 @@ public class GetSync extends AbstractEventProcessor
     	return alfresco;
     }
 
-    private boolean getSync(String getSyncEventName, Alfresco alfresco, SyncData syncData, List<Event> nextEvents) 
-    		throws JsonParseException, JsonMappingException, IOException
+    private boolean getSync(String getSyncEventName, Alfresco alfresco,
+            SyncData syncData, List<Event> nextEvents)
+            throws JsonParseException, JsonMappingException, IOException
     {
         boolean success = true;
 
-    	String subscriberId = syncData.getSubscriptionId();
-    	String subscriptionId = syncData.getSubscriptionId();
-    	Long syncId = syncData.getSyncId();
-		int counter = syncData.getNumRetries();
+        String subscriberId = syncData.getSubscriptionId();
+        String subscriptionId = syncData.getSubscriptionId();
+        Long syncId = syncData.getSyncId();
+        int counter = syncData.getNumRetries();
 
-		long getSyncTime = System.currentTimeMillis();
+        long getSyncTime = System.currentTimeMillis();
 
-    	super.resumeTimer();
-		String response = alfresco.getSyncRaw("-default-", subscriberId, subscriptionId, String.valueOf(syncId));
-    	super.suspendTimer();
+        super.resumeTimer();
+        String response = alfresco.getSyncRaw("-default-", subscriberId,
+                subscriptionId, String.valueOf(syncId));
+        super.suspendTimer();
 
-    	GetChangesResponse getSyncResponse = mapper.readValue(response, GetChangesResponse.class);
+        GetChangesResponse getSyncResponse = mapper.readValue(response,
+                GetChangesResponse.class);
 
-		logger.debug("response = " + response);
+        logger.debug("response = " + response);
 
-		String status = getSyncResponse.getStatus();
-		switch(status)
-		{
-		case "notReady":
-			if(counter < maxTries)
-			{
-				syncData.incrementRetries();
-				long nextGetSyncTime = getSyncTime + timeBetweenGetSyncs;
-				Event event = new Event(getSyncEventName, nextGetSyncTime, syncData.toDBObject());
-				nextEvents.add(event);
-			}
-			else
-			{
-			    // regard this as a fail
-			    success = false;
+        String status = getSyncResponse.getStatus();
+        switch (status)
+        {
+        case "notReady":
+        {
+            String message = getSyncResponse.getMessage();
+            if (counter < maxTries)
+            {
+                syncData.incrementRetries(message);
+                long nextGetSyncTime = getSyncTime + timeBetweenGetSyncs;
+                Event event = new Event(getSyncEventName, nextGetSyncTime,
+                        syncData.toDBObject());
+                nextEvents.add(event);
+            } else
+            {
+                // regard this as a fail
+                success = false;
 
-				syncData.maxRetriesHit();
+                syncData.maxRetriesHit();
 
-				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
-	            Event nextEvent = new Event(eventNameEndSync, scheduledTime, syncData.toDBObject());
-	        	nextEvents.add(nextEvent);
-			}
-			break; 
-		case "ready":
-			syncData.gotResults(getSyncResponse.getChanges());
+                long scheduledTime = System.currentTimeMillis()
+                        + timeBetweenSyncOps;
+                Event nextEvent = new Event(eventNameEndSync, scheduledTime,
+                        syncData.toDBObject());
+                nextEvents.add(nextEvent);
+            }
+            break;
+        }
+        case "ready":
+        {
+            String message = getSyncResponse.getMessage();
+            syncData.gotResults(getSyncResponse.getChanges(), message);
 
             String username = syncData.getUsername();
-	    	int numSyncChanges = syncData.getNumSyncChanges();
+            int numSyncChanges = syncData.getNumSyncChanges();
 
-	    	if(getFilesEnabled && numSyncChanges > 0)
-	    	{
-	    		for(Change change: syncData.getChanges())
-	    		{
-	    			ChangeType changeType = change.getType();
-	    			if(changeType.equals(ChangeType.CREATE_REPOS) || changeType.equals(ChangeType.UPDATE_REPOS))
-	    			{
-	    				String path = change.getPath();
-	    				DBObject getFileParameter = BasicDBObjectBuilder
-		    				.start("path", path)
-		    				.add("username", username)
-		    				.get();
-	    				long scheduledTime = System.currentTimeMillis() + timeBetweenGetFiles;
-	    	            Event nextEvent = new Event(eventNameGetFile, scheduledTime, getFileParameter);
-	    	        	nextEvents.add(nextEvent);
-	    			}
-	    		}
-	    	}
+            if (getFilesEnabled && numSyncChanges > 0)
+            {
+                for (Change change : syncData.getChanges())
+                {
+                    ChangeType changeType = change.getType();
+                    if (changeType.equals(ChangeType.CREATE_REPOS)
+                            || changeType.equals(ChangeType.UPDATE_REPOS))
+                    {
+                        String path = change.getPath();
+                        DBObject getFileParameter = BasicDBObjectBuilder
+                                .start("path", path).add("username", username)
+                                .get();
+                        long scheduledTime = System.currentTimeMillis()
+                                + timeBetweenGetFiles;
+                        Event nextEvent = new Event(eventNameGetFile,
+                                scheduledTime, getFileParameter);
+                        nextEvents.add(nextEvent);
+                    }
+                }
+            }
 
-			long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
-            Event nextEvent = new Event(eventNameEndSync, scheduledTime, syncData.toDBObject());
-        	nextEvents.add(nextEvent);
+            long scheduledTime = System.currentTimeMillis()
+                    + timeBetweenSyncOps;
+            Event nextEvent = new Event(eventNameEndSync, scheduledTime,
+                    syncData.toDBObject());
+            nextEvents.add(nextEvent);
 
-			break;
-		default:
-		}
+            break;
+        }
+        default:
+        }
 
-		return success;
+        return success;
     }
 
     @Override

@@ -103,14 +103,14 @@ public class StartSync extends AbstractEventProcessor
 
 				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), syncId, 0, 0, false, endTime, "Started sync " + syncId, false);
+						syncData.getSubscriptionId(), syncId, 0, 0, 0, false, endTime, "Started sync " + syncId, false);
 	            Event nextEvent = new Event("getSync", scheduledTime, syncData.toDBObject());
 	        	nextEvents.add(nextEvent);
         	}
         	else
         	{
 				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), null, 0, 0, false, endTime, "Start sync end time reached", false);
+						syncData.getSubscriptionId(), null, 0, 0, 0, false, endTime, "Start sync end time reached", false);
         	}
 
             return new EventResult(syncData.toDBObject(), nextEvents);
