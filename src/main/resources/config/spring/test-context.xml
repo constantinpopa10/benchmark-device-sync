@@ -206,9 +206,6 @@
         <constructor-arg name="syncScheme" value="${sync.scheme}"/>
         <constructor-arg name="syncHost" value="${sync.server}"/>
         <constructor-arg name="syncPort" value="${sync.port}"/>
-        <constructor-arg name="subsScheme" value="${subs.scheme}"/>
-        <constructor-arg name="subsHost" value="${subs.server}"/>
-        <constructor-arg name="subsPort" value="${subs.port}"/>
         <constructor-arg name="preferredCMISEndPoint"><null/></constructor-arg>
         <constructor-arg name="maxNumberOfConnections" value="${http.connection.max}"/>
         <constructor-arg name="connectionTimeoutMs" value="${http.connection.timeoutMs}"/>
