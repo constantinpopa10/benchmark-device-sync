@@ -191,6 +191,12 @@
         </constructor-arg>
     </bean>
 
+    <bean id="uploadFileHelper" class="org.alfresco.bm.devicesync.util.SwitchingUploadFileHelper">
+        <constructor-arg name="type" value="${uploadType}" />
+        <constructor-arg name="spoofUploadFileHelper" ref="spoofUploadFileHelper" />
+        <constructor-arg name="cmisUploadFileHelper" ref="cmisUploadFileHelper" />
+    </bean>
+
     <bean id="downloadFileHelper" class="org.alfresco.bm.devicesync.util.DownloadFileHelper">
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
@@ -262,6 +268,7 @@
         <constructor-arg name="eventNameCollectStatsBatch" value="collectStatsBatch" />
         <constructor-arg name="eventNameUploadFileBatch" value="uploadFileBatch" />
         <constructor-arg name="eventNameUploadAndSyncBatch" value="uploadAndSyncBatch" />
+        <constructor-arg name="eventNameTreeWalkBatch" value="treeWalkBatch" />
         <property name="chart" value="false" />
     </bean>
 
@@ -375,7 +382,7 @@
 
     <bean id="event.uploadFileForSubscription" class="org.alfresco.bm.devicesync.eventprocessor.UploadFileForSubscription" parent="event.base">
         <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
-        <constructor-arg name="uploadFileHelper" ref="spoofUploadFileHelper" />
+        <constructor-arg name="uploadFileHelper" ref="uploadFileHelper" />
     </bean>
 
     <bean id="event.uploadFileBatch" class="org.alfresco.bm.devicesync.eventprocessor.UploadFileBatch" parent="event.base">
@@ -398,6 +405,22 @@
 
     <bean id="event.fileUploaded" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base">
         <property name="chart" value="false" />
+    </bean>
+
+    <bean id="event.treeWalkBatch" class="org.alfresco.bm.devicesync.eventprocessor.TreeWalkBatch" parent="event.base">
+        <constructor-arg name="subscriptionsService" ref="subscriptionsDataService" />
+        <constructor-arg name="siteSampleSelector" ref="siteSampleSelector" />
+        <constructor-arg name="batchSize" value="${treeWalkBatch.batchSize}" />
+        <constructor-arg name="numBatches" value="${treeWalkBatch.numBatches}" />
+        <constructor-arg name="waitTimeBetweenBatches" value="${treeWalkBatch.waitTimeBetweenBatches}" />
+        <constructor-arg name="eventNameTreeWalk" value="treeWalk" />
+        <property name="chart" value="false" />
+    </bean>
+
+    <bean id="event.treeWalk" class="org.alfresco.bm.devicesync.eventprocessor.TreeWalk" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
+        <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
     </bean>
 
 </beans>

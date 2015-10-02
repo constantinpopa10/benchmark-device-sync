@@ -7,8 +7,8 @@ import java.util.stream.Stream;
 
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.dao.SubscriptionsService;
-import org.alfresco.bm.devicesync.data.SyncBatchData;
-import org.alfresco.bm.devicesync.data.SyncData;
+import org.alfresco.bm.devicesync.data.TreeWalkBatchData;
+import org.alfresco.bm.devicesync.data.TreeWalkData;
 import org.alfresco.bm.devicesync.data.UploadFileData;
 import org.alfresco.bm.devicesync.util.SiteSampleSelector;
 import org.alfresco.bm.devicesync.util.Util;
@@ -21,20 +21,14 @@ import org.apache.commons.logging.LogFactory;
 import com.mongodb.DBObject;
 
 /**
- * Prepare as much DesktopSync client data as configured.
- * 
- * In this class the configured values are combined with a site in Alfresco
- * (created by a former run of data load benchmark test) and the user data of
- * the site manager. The user data was created by the initial sign-up benchmark
- * test run.
  * 
  * @author sglover
  * @since 1.0
  */
-public class SyncBatch extends AbstractEventProcessor
+public class TreeWalkBatch extends AbstractEventProcessor
 {
     /** Logger for the class */
-    private static Log logger = LogFactory.getLog(SyncBatch.class);
+    private static Log logger = LogFactory.getLog(TreeWalkBatch.class);
 
     private SubscriptionsService subscriptionsService;
 
@@ -44,7 +38,7 @@ public class SyncBatch extends AbstractEventProcessor
 
     private final SiteSampleSelector siteSampleSelector;
 
-    private final String eventNameStartSync;
+    private final String eventNameTreeWalk;
 
     /**
      * Constructor
@@ -60,16 +54,16 @@ public class SyncBatch extends AbstractEventProcessor
      * @param nextEventId_p
      *            ID of the next event
      */
-    public SyncBatch(SubscriptionsService subscriptionsService,
+    public TreeWalkBatch(SubscriptionsService subscriptionsService,
             SiteSampleSelector siteSampleSelector, int batchSize,
             int numBatches, int waitTimeBetweenBatches,
-            String eventNameStartSync)
+            String eventNameTreeWalk)
     {
         this.subscriptionsService = subscriptionsService;
         this.siteSampleSelector = siteSampleSelector;
         this.batchSize = batchSize;
         this.numBatches = numBatches;
-        this.eventNameStartSync = eventNameStartSync;
+        this.eventNameTreeWalk = eventNameTreeWalk;
         this.waitTimeBetweenBatches = waitTimeBetweenBatches;
 
         // validate arguments
@@ -80,9 +74,9 @@ public class SyncBatch extends AbstractEventProcessor
     protected EventResult processEvent(Event event) throws Exception
     {
         DBObject dbObject = (DBObject) event.getData();
-        SyncBatchData syncBatchData = SyncBatchData.fromDBObject(dbObject);
-        int count = syncBatchData.getCount();
-        List<String> sites = syncBatchData.getSites();
+        TreeWalkBatchData treeWalkBatchData = TreeWalkBatchData.fromDBObject(dbObject);
+        int count = treeWalkBatchData.getCount();
+        List<String> sites = treeWalkBatchData.getSites();
 
         try
         {
@@ -111,12 +105,12 @@ public class SyncBatch extends AbstractEventProcessor
                 {
                     List<Event> events = subscriptions.map(
                             ufd -> {
-                                SyncData syncData = new SyncData(ufd
-                                        .getSiteId(), ufd.getUsername(), ufd
-                                        .getSubscriberId(), ufd
-                                        .getSubscriptionId(), null);
-                                Event nextEvent = new Event(eventNameStartSync,
-                                        scheduledTime, syncData.toDBObject());
+                                String username = ufd.getUsername();
+                                String siteId = ufd.getSiteId();
+                                TreeWalkData treeWalkData = new TreeWalkData(0, 0,
+                                        username, siteId);
+                                Event nextEvent = new Event(eventNameTreeWalk,
+                                        scheduledTime, treeWalkData.toDBObject());
                                 return nextEvent;
                             }).collect(Collectors.toList());
 
@@ -124,11 +118,11 @@ public class SyncBatch extends AbstractEventProcessor
                 }
 
                 {
-                    SyncBatchData newSyncBatchData = new SyncBatchData(
+                    TreeWalkBatchData newTreeWalkBatchData = new TreeWalkBatchData(
                             count + 1, sites);
                     Event nextEvent = new Event(event.getName(), scheduledTime
                             + waitTimeBetweenBatches,
-                            newSyncBatchData.toDBObject());
+                            newTreeWalkBatchData.toDBObject());
                     nextEvents.add(nextEvent);
                 }
 

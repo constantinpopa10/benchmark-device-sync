@@ -7,6 +7,7 @@ import org.alfresco.bm.devicesync.data.CollectStatsBatchData;
 import org.alfresco.bm.devicesync.data.SubscriberBatchData;
 import org.alfresco.bm.devicesync.data.SubscriptionBatchData;
 import org.alfresco.bm.devicesync.data.SyncBatchData;
+import org.alfresco.bm.devicesync.data.TreeWalkBatchData;
 import org.alfresco.bm.devicesync.data.UploadFileBatchData;
 import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
@@ -31,6 +32,7 @@ public class BatchProcessor extends AbstractEventProcessor
     private final String eventNameCollectStatsBatch;
     private final String eventNameUploadFileBatch;
     private final String eventNameUploadAndSyncBatch;
+    private final String eventNameTreeWalkBatch;
 
     /**
      * Constructor 
@@ -43,7 +45,7 @@ public class BatchProcessor extends AbstractEventProcessor
      */
     public BatchProcessor(String eventNameSubscribersBatch, String eventNameSubscriptionsBatch,
     		String eventNameSyncBatch, String eventNameCollectStatsBatch, String eventNameUploadFileBatch,
-    		String eventNameUploadAndSyncBatch)
+    		String eventNameUploadAndSyncBatch, String eventNameTreeWalkBatch)
     {
     	this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.eventNameSubscriptionsBatch = eventNameSubscriptionsBatch;
@@ -51,6 +53,7 @@ public class BatchProcessor extends AbstractEventProcessor
         this.eventNameCollectStatsBatch = eventNameCollectStatsBatch;
         this.eventNameUploadFileBatch = eventNameUploadFileBatch;
         this.eventNameUploadAndSyncBatch = eventNameUploadAndSyncBatch;
+        this.eventNameTreeWalkBatch = eventNameTreeWalkBatch;
 
         // validate arguments
         Util.checkArgumentNotNull(eventNameSubscribersBatch, "eventNameSubscribersBatch");
@@ -58,6 +61,7 @@ public class BatchProcessor extends AbstractEventProcessor
         Util.checkArgumentNotNull(eventNameSyncBatch, "eventNameSyncBatch");
         Util.checkArgumentNotNull(eventNameUploadAndSyncBatch, "eventNameUploadAndSyncBatch");
         Util.checkArgumentNotNull(eventNameCollectStatsBatch, "eventNameCollectStatsBatch");
+        Util.checkArgumentNotNull(eventNameTreeWalkBatch, "eventNameTreeWalkBatch");
     }
 
     @Override
@@ -103,6 +107,12 @@ public class BatchProcessor extends AbstractEventProcessor
 	            CollectStatsBatchData data = new CollectStatsBatchData(0);
 	            Event nextEvent = new Event(eventNameCollectStatsBatch, time, data.toDBObject());
 	            nextEvents.add(nextEvent);
+            }
+
+            {
+                TreeWalkBatchData data = new TreeWalkBatchData(0);
+                Event nextEvent = new Event(eventNameTreeWalkBatch, time, data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             String msg = "Created batch";
