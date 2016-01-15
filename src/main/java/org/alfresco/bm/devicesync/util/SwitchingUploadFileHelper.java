@@ -16,14 +16,15 @@ public class SwitchingUploadFileHelper implements UploadFileHelper
 {
     private UploadFileHelper delegate;
 
-    public SwitchingUploadFileHelper(String type, SpoofUploadFileHelper spoofUploadFileHelper,
+    public SwitchingUploadFileHelper(String type,
+            SpoofUploadFileHelper spoofUploadFileHelper,
             CMISUploadFileHelper cmisUploadFileHelper)
     {
-        if(type.equals("cmis"))
+        if (type.equals("cmis"))
         {
             delegate = cmisUploadFileHelper;
         }
-        else if(type.equals("spoof"))
+        else if (type.equals("spoof"))
         {
             delegate = spoofUploadFileHelper;
         }
@@ -38,6 +39,7 @@ public class SwitchingUploadFileHelper implements UploadFileHelper
             SubscriptionData subscriptionData, UploadListener uploadListener,
             String filenamePrefix) throws IOException
     {
-        return delegate.doUpload(uploadFileData, subscriptionData, uploadListener, filenamePrefix);
+        return delegate.doUpload(uploadFileData, subscriptionData,
+                uploadListener, filenamePrefix);
     }
 }

@@ -37,14 +37,14 @@ public class CMISEventData
     private final Session session;
     private final LinkedList<Folder> breadcrumb;
     private Document document;
-    
+
     public CMISEventData(Session session)
     {
         this.session = session;
         this.breadcrumb = new LinkedList<Folder>();
         this.document = null;
     }
-    
+
     public CMISEventData(CMISEventData copyFrom)
     {
         this.session = copyFrom.session;
@@ -58,7 +58,7 @@ public class CMISEventData
     }
 
     /**
-     * @return              the internally-stored breadcrumb that can be modified directly
+     * @return the internally-stored breadcrumb that can be modified directly
      */
     public LinkedList<Folder> getBreadcrumb()
     {
@@ -66,14 +66,16 @@ public class CMISEventData
     }
 
     /**
-     * @return              the document in the current event
+     * @return the document in the current event
      */
     public Document getDocument()
     {
         return document;
     }
+
     /**
-     * @param document      set the document for the current event
+     * @param document
+     *            set the document for the current event
      */
     public void setDocument(Document document)
     {

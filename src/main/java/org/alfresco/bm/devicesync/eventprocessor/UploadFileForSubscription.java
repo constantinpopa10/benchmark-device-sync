@@ -44,7 +44,8 @@ import com.mongodb.DBObject;
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_FILE_UPLOADED}: The {@link CMISEventData data object} with the new file<br/>
+ * {@link #EVENT_NAME_FILE_UPLOADED}: The {@link CMISEventData data object} with
+ * the new file<br/>
  * 
  * @author sglover
  * @since 1.0
@@ -58,9 +59,11 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
     private final UploadFileHelper uploadFileHelper;
 
     /**
-     * @param testFileService               service to provide sample files for upload
+     * @param testFileService
+     *            service to provide sample files for upload
      */
-    public UploadFileForSubscription(SubscriptionsService subscriptionsService, UploadFileHelper uploadFileHelper)
+    public UploadFileForSubscription(SubscriptionsService subscriptionsService,
+            UploadFileHelper uploadFileHelper)
     {
         super();
         this.subscriptionsService = subscriptionsService;
@@ -69,7 +72,8 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
     }
 
     /**
-     * Override the {@link #EVENT_NAME_FILE_UPLOADED default} event name for 'file uploaded'.
+     * Override the {@link #EVENT_NAME_FILE_UPLOADED default} event name for
+     * 'file uploaded'.
      */
     public void setEventNameFileUploaded(String eventNameFileUploaded)
     {
@@ -79,59 +83,56 @@ public class UploadFileForSubscription extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
-        super.suspendTimer();                               // Timer control
+        super.suspendTimer(); // Timer control
 
-        DBObject dbObject = (DBObject)event.getData();
+        DBObject dbObject = (DBObject) event.getData();
         UploadFileData uploadFileData = UploadFileData.fromDBObject(dbObject);
         String subscriptionId = uploadFileData.getSubscriptionId();
-        SubscriptionData subscriptionData = subscriptionsService.getSubscription(subscriptionId);
+        SubscriptionData subscriptionData = subscriptionsService
+                .getSubscription(subscriptionId);
 
         try
         {
-        	DBObject data = uploadFileHelper.doUpload(uploadFileData, subscriptionData, new UploadListener()
-			{
-				@Override
-				public void beforeUpload()
-				{
-		            UploadFileForSubscription.super.resumeTimer();                            // Timer control
-				}
-				
-				@Override
-				public void afterUpload()
-				{
-					UploadFileForSubscription.super.stopTimer();                              // Timer control
-				}
+            DBObject data = uploadFileHelper.doUpload(uploadFileData,
+                    subscriptionData, new UploadListener()
+                    {
+                        @Override
+                        public void beforeUpload()
+                        {
+                            UploadFileForSubscription.super.resumeTimer(); // Timer
+                                                                           // control
+                        }
 
-				@Override
-                public void onException(Exception e)
-                {
-					UploadFileForSubscription.super.stopTimer();                              // Timer control
-                }
-			}, super.getName());
+                        @Override
+                        public void afterUpload()
+                        {
+                            UploadFileForSubscription.super.stopTimer(); // Timer
+                                                                         // control
+                        }
+
+                        @Override
+                        public void onException(Exception e)
+                        {
+                            UploadFileForSubscription.super.stopTimer(); // Timer
+                                                                         // control
+                        }
+                    }, super.getName());
 
             // Done
             Event doneEvent = new Event(eventNameFileUploaded, data);
-            EventResult result = new EventResult(
-                    BasicDBObjectBuilder
-                        .start()
-                        .append("msg", "Successfully uploaded document.")
-                        .append("document", data)
-                        .get(),
-                    doneEvent);
-            
+            EventResult result = new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Successfully uploaded document.")
+                    .append("document", data).get(), doneEvent);
+
             // Done
             return result;
         }
-        catch(UploadFileException e)
+        catch (UploadFileException e)
         {
-            return new EventResult(
-            		BasicDBObjectBuilder
-                    	.start()
-                    	.append("msg", "Exception uploading document.")
-                    	.append("exception", e.getE().getMessage())
-                    	.append("document", e.getData())
-                    	.get(),
-                    false);
+            return new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Exception uploading document.")
+                    .append("exception", e.getE().getMessage())
+                    .append("document", e.getData()).get(), false);
         }
     }
 }

@@ -33,7 +33,7 @@ public class ProcessData
 
     private String name;
     private DataCreationState state;
-    
+
     public ProcessData()
     {
         state = DataCreationState.Unknown;
@@ -43,14 +43,17 @@ public class ProcessData
     {
         return name;
     }
+
     public void setName(String processName)
     {
         this.name = processName;
     }
+
     public DataCreationState getState()
     {
         return state;
     }
+
     public void setState(DataCreationState state)
     {
         this.state = state;

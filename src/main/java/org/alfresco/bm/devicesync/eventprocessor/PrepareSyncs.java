@@ -16,8 +16,9 @@ import org.apache.commons.logging.LogFactory;
 /**
  * Prepare as much DesktopSync client data as configured.
  * 
- * In this class the configured values are combined with a site in Alfresco (created by a former run of data load
- * benchmark test) and the user data of the site manager. The user data was created by the initial sign-up benchmark
+ * In this class the configured values are combined with a site in Alfresco
+ * (created by a former run of data load benchmark test) and the user data of
+ * the site manager. The user data was created by the initial sign-up benchmark
  * test run.
  * 
  * @author sglover
@@ -36,18 +37,24 @@ public class PrepareSyncs extends AbstractEventProcessor
     private final String eventNameStartSync;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public PrepareSyncs(SubscriptionsService subscriptionsService, int numBatches, String eventNameStartSync,
-    		int waitTimeBetweenSyncs, int batchSize)
+    public PrepareSyncs(SubscriptionsService subscriptionsService,
+            int numBatches, String eventNameStartSync,
+            int waitTimeBetweenSyncs, int batchSize)
     {
-    	this.subscriptionsService = subscriptionsService;
+        this.subscriptionsService = subscriptionsService;
         this.numBatches = numBatches;
         this.eventNameStartSync = eventNameStartSync;
         this.waitTimeBetweenSyncs = waitTimeBetweenSyncs;
@@ -62,31 +69,35 @@ public class PrepareSyncs extends AbstractEventProcessor
     {
         try
         {
-        	String msg = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<Event>();
 
-            long numSubscriptions = subscriptionsService.countSubscriptions(DataCreationState.Created);
-            if(numSubscriptions == 0)
+            long numSubscriptions = subscriptionsService
+                    .countSubscriptions(DataCreationState.Created);
+            if (numSubscriptions == 0)
             {
-	            msg = "No subscriptions, stopping.";
+                msg = "No subscriptions, stopping.";
             }
             else
             {
-            	long scheduledTime = System.currentTimeMillis();
-            	for(int i = 0; i < numBatches; i++)
-            	{
-            		for(int j = 0; j < batchSize; j++)
-            		{
-	            		SubscriptionData subscriptionData = subscriptionsService.getRandomSubscription(null);
-	
-	                	Event event = new Event(eventNameStartSync, scheduledTime, subscriptionData.toDBObject());
-	                	nextEvents.add(event);
-            		}
+                long scheduledTime = System.currentTimeMillis();
+                for (int i = 0; i < numBatches; i++)
+                {
+                    for (int j = 0; j < batchSize; j++)
+                    {
+                        SubscriptionData subscriptionData = subscriptionsService
+                                .getRandomSubscription(null);
 
-            		scheduledTime += waitTimeBetweenSyncs;
-            	}
+                        Event event = new Event(eventNameStartSync,
+                                scheduledTime, subscriptionData.toDBObject());
+                        nextEvents.add(event);
+                    }
 
-	            msg = "Prepared " + numBatches*batchSize + " syncs in " + numBatches + " batches";
+                    scheduledTime += waitTimeBetweenSyncs;
+                }
+
+                msg = "Prepared " + numBatches * batchSize + " syncs in "
+                        + numBatches + " batches";
             }
 
             EventResult result = new EventResult(msg, nextEvents);

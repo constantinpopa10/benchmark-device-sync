@@ -40,7 +40,8 @@ import com.mongodb.DBObject;
  * 
  * <h1>Output</h1>
  * 
- * {@link #EVENT_NAME_FILE_UPLOADED}: The {@link CMISEventData data object} with the new file<br/>
+ * {@link #EVENT_NAME_FILE_UPLOADED}: The {@link CMISEventData data object} with
+ * the new file<br/>
  * 
  * @author sglover
  * @since 1.0
@@ -53,7 +54,8 @@ public class GetFile extends AbstractCMISEventProcessor
     private final DownloadFileHelper downloadFileHelper;
 
     /**
-     * @param testFileService               service to provide sample files for upload
+     * @param testFileService
+     *            service to provide sample files for upload
      */
     public GetFile(DownloadFileHelper downloadFileHelper)
     {
@@ -63,7 +65,8 @@ public class GetFile extends AbstractCMISEventProcessor
     }
 
     /**
-     * Override the {@link #EVENT_NAME_FILE_UPLOADED default} event name for 'file uploaded'.
+     * Override the {@link #EVENT_NAME_FILE_UPLOADED default} event name for
+     * 'file uploaded'.
      */
     public void setEventNameFileDownloaded(String eventNameFileDownloaded)
     {
@@ -73,52 +76,42 @@ public class GetFile extends AbstractCMISEventProcessor
     @Override
     protected EventResult processCMISEvent(Event event) throws Exception
     {
-        super.suspendTimer();                               // Timer control
+        super.suspendTimer(); // Timer control
 
-        DBObject dbObject = (DBObject)event.getData();
-        String username = (String)dbObject.get("username");
-        String path = (String)dbObject.get("path");
+        DBObject dbObject = (DBObject) event.getData();
+        String username = (String) dbObject.get("username");
+        String path = (String) dbObject.get("path");
 
         try
         {
-            super.resumeTimer();                               // Timer control
-        	DBObject downloadResult = downloadFileHelper.download(username, path);
-            super.suspendTimer();                               // Timer control
+            super.resumeTimer(); // Timer control
+            DBObject downloadResult = downloadFileHelper.download(username,
+                    path);
+            super.suspendTimer(); // Timer control
 
             // Done
             Event doneEvent = new Event(eventNameFileDownloaded, downloadResult);
-            EventResult result = new EventResult(
-                    BasicDBObjectBuilder
-                        .start()
-                        .append("msg", "Successfully downloaded document.")
-                        .append("result", downloadResult)
-                        .get(),
-                    doneEvent);
-            
+            EventResult result = new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Successfully downloaded document.")
+                    .append("result", downloadResult).get(), doneEvent);
+
             // Done
             return result;
         }
-        catch(UploadFileException e)
+        catch (UploadFileException e)
         {
-        	e.printStackTrace();
-            return new EventResult(
-            		BasicDBObjectBuilder
-                    	.start()
-                    	.append("msg", "Exception downloading document.")
-                    	.append("exception", e.getE().getMessage())
-                    	.append("document", e.getData())
-                    	.get(),
-                    false);
+            e.printStackTrace();
+            return new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Exception downloading document.")
+                    .append("exception", e.getE().getMessage())
+                    .append("document", e.getData()).get(), false);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
-        	e.printStackTrace();
-            return new EventResult(
-            		BasicDBObjectBuilder
-                	.start()
-                	.append("msg", "Exception downloading document.")
-                	.append("exception", e.getMessage())
-                	.get(), false);
+            e.printStackTrace();
+            return new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Exception downloading document.")
+                    .append("exception", e.getMessage()).get(), false);
         }
     }
 }

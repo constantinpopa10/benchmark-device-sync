@@ -37,7 +37,8 @@ public class DownloadFileHelper
 
     private String cmisBindingUrl;
 
-    public DownloadFileHelper(UserDataService userDataService, String alfrescoHost, int alfrescoPort)
+    public DownloadFileHelper(UserDataService userDataService,
+            String alfrescoHost, int alfrescoPort)
     {
         this.userDataService = userDataService;
 
@@ -51,12 +52,15 @@ public class DownloadFileHelper
         this.cmisBindingUrl = sb.toString();
     }
 
-    private Session getCMISSession(String username, BindingType bindingType, String bindingUrl, String repositoryId)
+    private Session getCMISSession(String username, BindingType bindingType,
+            String bindingUrl, String repositoryId)
     {
         UserData user = userDataService.findUserByUsername(username);
         if (user == null)
         {
-            throw new RuntimeException("Unable to start CMIS session; user no longer exists: " + username);
+            throw new RuntimeException(
+                    "Unable to start CMIS session; user no longer exists: "
+                            + username);
         }
         String password = user.getPassword();
 
@@ -64,27 +68,32 @@ public class DownloadFileHelper
         Map<String, String> parameters = new HashMap<String, String>();
         if (bindingType != null && bindingType.equals(BindingType.ATOMPUB))
         {
-            parameters.put(SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
+            parameters.put(SessionParameter.BINDING_TYPE,
+                    BindingType.ATOMPUB.value());
             parameters.put(SessionParameter.ATOMPUB_URL, bindingUrl);
         }
         else if (bindingType != null && bindingType.equals(BindingType.BROWSER))
         {
-            parameters.put(SessionParameter.BINDING_TYPE, BindingType.BROWSER.value());
+            parameters.put(SessionParameter.BINDING_TYPE,
+                    BindingType.BROWSER.value());
             parameters.put(SessionParameter.BROWSER_URL, bindingUrl);
         }
         else
         {
-            throw new RuntimeException("Unsupported CMIS binding type: " + bindingType);
+            throw new RuntimeException("Unsupported CMIS binding type: "
+                    + bindingType);
         }
         parameters.put(SessionParameter.USER, username);
         parameters.put(SessionParameter.PASSWORD, password);
-        
+
         // First check if we need to choose a repository
         SessionFactory sessionFactory = SessionFactoryImpl.newInstance();
-        List<Repository> repositories = sessionFactory.getRepositories(parameters);
+        List<Repository> repositories = sessionFactory
+                .getRepositories(parameters);
         if (repositories.size() == 0)
         {
-        	throw new RuntimeException("Unable to find any repositories at " + bindingUrl + " with user " + username);
+            throw new RuntimeException("Unable to find any repositories at "
+                    + bindingUrl + " with user " + username);
         }
         if (repositoryId.equals(REPOSITORY_ID_USE_FIRST))
         {
@@ -97,10 +106,11 @@ public class DownloadFileHelper
         }
 
         // Create the session
-        Session session = SessionFactoryImpl.newInstance().createSession(parameters);
-        if(opContext != null)
+        Session session = SessionFactoryImpl.newInstance().createSession(
+                parameters);
+        if (opContext != null)
         {
-        	session.setDefaultContext(opContext);
+            session.setDefaultContext(opContext);
         }
 
         return session;
@@ -108,55 +118,55 @@ public class DownloadFileHelper
 
     public DBObject download(String username, String path) throws IOException
     {
-    	if(path.startsWith("/Company Home"))
-    	{
-    		path = path.substring("/Company Home".length());
-    	}
+        if (path.startsWith("/Company Home"))
+        {
+            path = path.substring("/Company Home".length());
+        }
 
-    	Session session = getCMISSession(username, BindingType.BROWSER, cmisBindingUrl, "-default-");
-    	Document document = (Document)session.getObjectByPath(path);
-    	ContentStream contentStream = document.getContentStream();
-    	SlurpingOutputStream out = new SlurpingOutputStream();
-    	InputStream in = contentStream.getStream();
+        Session session = getCMISSession(username, BindingType.BROWSER,
+                cmisBindingUrl, "-default-");
+        Document document = (Document) session.getObjectByPath(path);
+        ContentStream contentStream = document.getContentStream();
+        SlurpingOutputStream out = new SlurpingOutputStream();
+        InputStream in = contentStream.getStream();
 
-    	// would like to use try
-    	try
-    	{
-    		IOUtils.copy(in, out);
-    		long length = out.getLength();
+        // would like to use try
+        try
+        {
+            IOUtils.copy(in, out);
+            long length = out.getLength();
 
-        	DBObject dbObject = BasicDBObjectBuilder
-        			.start("length", length)
-        			.get();
-        	return dbObject;
-    	}
-    	finally
-    	{
-    		if(in != null)
-    		{
-    			in.close();
-    		}
+            DBObject dbObject = BasicDBObjectBuilder.start("length", length)
+                    .get();
+            return dbObject;
+        }
+        finally
+        {
+            if (in != null)
+            {
+                in.close();
+            }
 
-    		if(out != null)
-    		{
-    			out.close();
-    		}
-    	}
+            if (out != null)
+            {
+                out.close();
+            }
+        }
     }
 
     private class SlurpingOutputStream extends OutputStream
-	{
-    	private long length;
+    {
+        private long length;
 
-		@Override
+        @Override
         public void write(int b) throws IOException
         {
-			length++;
+            length++;
         }
 
-		long getLength()
-		{
-			return length;
-		}
-	};
+        long getLength()
+        {
+            return length;
+        }
+    };
 }

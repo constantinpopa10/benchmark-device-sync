@@ -12,35 +12,35 @@ import com.mongodb.DBObject;
  */
 public class UploadFileBatchData implements Serializable
 {
-	private static final long serialVersionUID = 946578159221599841L;
+    private static final long serialVersionUID = 946578159221599841L;
 
-	public static final String FIELD_COUNT = "count";
+    public static final String FIELD_COUNT = "count";
 
-	private int count;
+    private int count;
 
-	public UploadFileBatchData(int count)
+    public UploadFileBatchData(int count)
     {
-	    super();
-	    this.count = count;
+        super();
+        this.count = count;
     }
 
     public int getCount()
-	{
-		return count;
-	}
-
-	public DBObject toDBObject()
     {
-    	BasicDBObjectBuilder builder = BasicDBObjectBuilder
-        		.start(FIELD_COUNT, getCount());
-    	DBObject dbObject = builder.get();
-    	return dbObject;
+        return count;
+    }
+
+    public DBObject toDBObject()
+    {
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start(FIELD_COUNT,
+                getCount());
+        DBObject dbObject = builder.get();
+        return dbObject;
     }
 
     public static UploadFileBatchData fromDBObject(DBObject dbObject)
     {
-    	int count = (Integer)dbObject.get(FIELD_COUNT);
-    	UploadFileBatchData syncData = new UploadFileBatchData(count);
-    	return syncData;
+        int count = (Integer) dbObject.get(FIELD_COUNT);
+        UploadFileBatchData syncData = new UploadFileBatchData(count);
+        return syncData;
     }
 }

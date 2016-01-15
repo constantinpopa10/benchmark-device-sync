@@ -41,135 +41,164 @@ public class SubscriptionsBatch extends AbstractEventProcessor
     private final int waitTimeBetweenBatches; // ms
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public SubscriptionsBatch(SubscribersService subscribersDataService, ExtendedSiteDataService siteDataService,
-    		int batchSize, int numBatches, int waitTimeBetweenBatches, String eventNameCreateSubscription)
+    public SubscriptionsBatch(SubscribersService subscribersDataService,
+            ExtendedSiteDataService siteDataService, int batchSize,
+            int numBatches, int waitTimeBetweenBatches,
+            String eventNameCreateSubscription)
     {
-    	this.subscribersDataService = subscribersDataService;
-    	this.siteDataService = siteDataService;
-    	this.eventNameCreateSubscription = eventNameCreateSubscription;
-    	this.batchSize = batchSize;
-    	this.numBatches = numBatches;
-    	this.waitTimeBetweenBatches = waitTimeBetweenBatches;
+        this.subscribersDataService = subscribersDataService;
+        this.siteDataService = siteDataService;
+        this.eventNameCreateSubscription = eventNameCreateSubscription;
+        this.batchSize = batchSize;
+        this.numBatches = numBatches;
+        this.waitTimeBetweenBatches = waitTimeBetweenBatches;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	super.suspendTimer();
+        super.suspendTimer();
 
-    	DBObject dbObject = (DBObject)event.getData();
-    	SubscriptionBatchData subscriptionBatchData = SubscriptionBatchData.fromDBObject(dbObject);
-    	Integer batchSizeParameter = subscriptionBatchData.getBatchSize();
-    	int batchSize = batchSizeParameter != null ? 
-    			batchSizeParameter.intValue() : this.batchSize;
-    	Integer numBatchesParameter = subscriptionBatchData.getNumBatches();
-    	int numBatches = numBatchesParameter != null ? 
-    			numBatchesParameter.intValue() : this.numBatches;
-    	Integer waitTimeBetweenBatchesParameter = subscriptionBatchData.getWaitTimeBetweenBatches();
-    	int waitTimeBetweenBatches = waitTimeBetweenBatchesParameter != null ? 
-    			waitTimeBetweenBatchesParameter.intValue() : this.waitTimeBetweenBatches;
-    	int count = subscriptionBatchData.getCount();
-    	String nextEventName = subscriptionBatchData.getNextEventName();
-    	List<String> sites = subscriptionBatchData.getSites();
+        DBObject dbObject = (DBObject) event.getData();
+        SubscriptionBatchData subscriptionBatchData = SubscriptionBatchData
+                .fromDBObject(dbObject);
+        Integer batchSizeParameter = subscriptionBatchData.getBatchSize();
+        int batchSize = batchSizeParameter != null ? batchSizeParameter
+                .intValue() : this.batchSize;
+        Integer numBatchesParameter = subscriptionBatchData.getNumBatches();
+        int numBatches = numBatchesParameter != null ? numBatchesParameter
+                .intValue() : this.numBatches;
+        Integer waitTimeBetweenBatchesParameter = subscriptionBatchData
+                .getWaitTimeBetweenBatches();
+        int waitTimeBetweenBatches = waitTimeBetweenBatchesParameter != null ? waitTimeBetweenBatchesParameter
+                .intValue() : this.waitTimeBetweenBatches;
+        int count = subscriptionBatchData.getCount();
+        String nextEventName = subscriptionBatchData.getNextEventName();
+        List<String> sites = subscriptionBatchData.getSites();
 
         try
         {
             List<Event> nextEvents = new LinkedList<>();
             String msg = null;
 
-            if(count >= numBatches)
+            if (count >= numBatches)
             {
-            	if(nextEventName == null || nextEventName.equals(""))
-            	{
-                	msg = "Hit number of batches, stopping.";
-            	}
-            	else
-            	{
-                	msg = "Hit number of batches, raising next event " + nextEventName;
-                	Event nextEvent = new Event(nextEventName, System.currentTimeMillis(), null);
-                	nextEvents.add(nextEvent);
-            	}
+                if (nextEventName == null || nextEventName.equals(""))
+                {
+                    msg = "Hit number of batches, stopping.";
+                }
+                else
+                {
+                    msg = "Hit number of batches, raising next event "
+                            + nextEventName;
+                    Event nextEvent = new Event(nextEventName,
+                            System.currentTimeMillis(), null);
+                    nextEvents.add(nextEvent);
+                }
             }
             else
             {
-            	int subscriptionsCreated = 0;
-            	long scheduledTime = System.currentTimeMillis();
+                int subscriptionsCreated = 0;
+                long scheduledTime = System.currentTimeMillis();
 
-        		// we assume that subscribers are a member of at least one site
-            	try(Stream<SubscriberData> subscribers = subscribersDataService.randomSubscribers(batchSize*2))
-            	{
-            		List<Event> events = subscribers.map(sd -> {
-            			String username = sd.getUsername();
-            			String subscriberId = sd.getSubscriberId();
+                // we assume that subscribers are a member of at least one site
+                try (Stream<SubscriberData> subscribers = subscribersDataService
+                        .randomSubscribers(batchSize * 2))
+                {
+                    List<Event> events = subscribers
+                            .map(sd -> {
+                                String username = sd.getUsername();
+                                String subscriberId = sd.getSubscriberId();
 
-                		SiteMemberData sm = siteDataService.randomSiteMember(null, DataCreationState.Created, username,
-                				SiteRole.SiteManager.toString(), SiteRole.SiteCollaborator.toString());
-                		if(sm != null)
-                		{
-	                		String siteId = sm.getSiteId();
-	
-	                		logger.debug("Got site member data " + sm + " for user " + username);
-	
-		            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
-		                	Event nextEvent = new Event(eventNameCreateSubscription, scheduledTime,
-		                			subscriptionData.toDBObject());
-		                	return nextEvent;
-                		}
-                		else
-                		{
-                			return null;
-                		}
-            		})
-            		.filter(e -> e != null)
-            		.collect(Collectors.toList());
+                                SiteMemberData sm = siteDataService.randomSiteMember(
+                                        null, DataCreationState.Created,
+                                        username,
+                                        SiteRole.SiteManager.toString(),
+                                        SiteRole.SiteCollaborator.toString());
+                                if (sm != null)
+                                {
+                                    String siteId = sm.getSiteId();
 
-        			subscriptionsCreated = events.size();
-                	nextEvents.addAll(events);
-            	}
+                                    logger.debug("Got site member data " + sm
+                                            + " for user " + username);
 
-//        		try(Stream<SiteMemberData> siteMembers = siteDataService.randomSiteMembers(DataCreationState.Created,
-//        				new String[] {SiteRole.SiteManager.toString(),
-//        				SiteRole.SiteCollaborator.toString(),
-//        				SiteRole.SiteContributor.toString()},
-//        				batchSize))
-//				{
-//        			List<Event> events = siteMembers.map(sm -> {
-//                		String siteId = sm.getSiteId();
-//                		String username = sm.getUsername();
-//
-//                		logger.debug("Getting random subscriber for user " + username);
-//
-//                		SubscriberData subscriberData = subscribersDataService.getRandomSubscriber(username);
-//                		String subscriberId = subscriberData.getSubscriberId();
-//
-//	            		SubscriptionData subscriptionData = new SubscriptionData(siteId, username, subscriberId);
-//	                	Event nextEvent = new Event(eventNameCreateSubscription, System.currentTimeMillis(),
-//	                			subscriptionData.toDBObject());
-//	                	return nextEvent;
-//        			})
-//        			.collect(Collectors.toList());
-//        			subscriptionsCreated = events.size();
-//                	nextEvents.addAll(events);
-//				}
+                                    SubscriptionData subscriptionData = new SubscriptionData(
+                                            siteId, username, subscriberId);
+                                    Event nextEvent = new Event(
+                                            eventNameCreateSubscription,
+                                            scheduledTime, subscriptionData
+                                                    .toDBObject());
+                                    return nextEvent;
+                                }
+                                else
+                                {
+                                    return null;
+                                }
+                            }).filter(e -> e != null)
+                            .collect(Collectors.toList());
 
-	        	{
-	            	long batchScheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
-	            	SubscriptionBatchData newSubscriptionBatchData = new SubscriptionBatchData(count + 1,
-	            			batchSizeParameter, numBatchesParameter, waitTimeBetweenBatchesParameter, nextEventName,
-	            			sites);
-	            	Event nextEvent = new Event(event.getName(), batchScheduledTime, newSubscriptionBatchData.toDBObject());
-	            	nextEvents.add(nextEvent);
-	        	}
+                    subscriptionsCreated = events.size();
+                    nextEvents.addAll(events);
+                }
 
-	        	msg = "Prepared " + subscriptionsCreated + " subscription creates";
+                // try(Stream<SiteMemberData> siteMembers =
+                // siteDataService.randomSiteMembers(DataCreationState.Created,
+                // new String[] {SiteRole.SiteManager.toString(),
+                // SiteRole.SiteCollaborator.toString(),
+                // SiteRole.SiteContributor.toString()},
+                // batchSize))
+                // {
+                // List<Event> events = siteMembers.map(sm -> {
+                // String siteId = sm.getSiteId();
+                // String username = sm.getUsername();
+                //
+                // logger.debug("Getting random subscriber for user " +
+                // username);
+                //
+                // SubscriberData subscriberData =
+                // subscribersDataService.getRandomSubscriber(username);
+                // String subscriberId = subscriberData.getSubscriberId();
+                //
+                // SubscriptionData subscriptionData = new
+                // SubscriptionData(siteId, username, subscriberId);
+                // Event nextEvent = new Event(eventNameCreateSubscription,
+                // System.currentTimeMillis(),
+                // subscriptionData.toDBObject());
+                // return nextEvent;
+                // })
+                // .collect(Collectors.toList());
+                // subscriptionsCreated = events.size();
+                // nextEvents.addAll(events);
+                // }
+
+                {
+                    long batchScheduledTime = System.currentTimeMillis()
+                            + waitTimeBetweenBatches;
+                    SubscriptionBatchData newSubscriptionBatchData = new SubscriptionBatchData(
+                            count + 1, batchSizeParameter, numBatchesParameter,
+                            waitTimeBetweenBatchesParameter, nextEventName,
+                            sites);
+                    Event nextEvent = new Event(event.getName(),
+                            batchScheduledTime,
+                            newSubscriptionBatchData.toDBObject());
+                    nextEvents.add(nextEvent);
+                }
+
+                msg = "Prepared " + subscriptionsCreated
+                        + " subscription creates";
             }
 
             if (logger.isDebugEnabled())

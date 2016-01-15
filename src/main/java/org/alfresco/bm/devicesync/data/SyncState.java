@@ -7,5 +7,5 @@ package org.alfresco.bm.devicesync.data;
  */
 public enum SyncState
 {
-	NotScheduled, Scheduled, Started, NotReady, Ready, Cancelled, Exception, Error, Done;
+    NotScheduled, Scheduled, Started, NotReady, Ready, Cancelled, Exception, Error, Done;
 }

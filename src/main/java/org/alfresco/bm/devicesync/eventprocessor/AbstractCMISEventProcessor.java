@@ -37,7 +37,8 @@ import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
 
 /**
- * Abstract event processing to handle CMIS-specific behaviour e.g. the catch-and-report of {@link CmisException}.
+ * Abstract event processing to handle CMIS-specific behaviour e.g. the
+ * catch-and-report of {@link CmisException}.
  * 
  * @author Derek Hulley
  * @since 1.0
@@ -47,8 +48,9 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
     /**
      * {@inheritDoc}
      */
-    protected abstract EventResult processCMISEvent(Event event) throws Exception;
-    
+    protected abstract EventResult processCMISEvent(Event event)
+            throws Exception;
+
     public final EventResult processEvent(Event event) throws Exception
     {
         try
@@ -60,48 +62,40 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
             String error = e.getMessage();
             String stack = ExceptionUtils.getStackTrace(e);
             // Grab the CMIS information
-            DBObject data = BasicDBObjectBuilder
-                    .start()
-                    .append("msg", error)
-                    .append("stack", stack)
-                    .push("cmisFault")
-                        .append("code", "" + e.getCode())               // BigInteger is not Serializable
-                        .append("errorContent", e.getErrorContent())
-                    .pop()
-                    .get();
+            DBObject data = BasicDBObjectBuilder.start().append("msg", error)
+                    .append("stack", stack).push("cmisFault")
+                    .append("code", "" + e.getCode()) // BigInteger is not
+                                                      // Serializable
+                    .append("errorContent", e.getErrorContent()).pop().get();
             // Build failure result
             return new EventResult(data, false);
         }
-        catch(RuntimeException e)
+        catch (RuntimeException e)
         {
-        	e.printStackTrace();
-            return new EventResult(
-            		BasicDBObjectBuilder
-                	.start()
-                	.append("msg", "Exception uploading document.")
-                	.append("exception", e.getMessage())
-                	.get(), false);
+            e.printStackTrace();
+            return new EventResult(BasicDBObjectBuilder.start()
+                    .append("msg", "Exception uploading document.")
+                    .append("exception", e.getMessage()).get(), false);
         }
     }
-    
+
     /** Some default search strings when no file is found with them */
-    public static final String[] DEFAULT_SEARCH_STRINGS = new String[] {
-            "\"quick\"",
-            "Sa*",
-            "alfresco",
-            "ipsum",
-            "\"ipsum lorum\""
-            };
+    public static final String[] DEFAULT_SEARCH_STRINGS = new String[]
+    { "\"quick\"", "Sa*", "alfresco", "ipsum", "\"ipsum lorum\"" };
     public static final String DEFAULT_SEARCH_TERMS_FILENAME = "searchterms.txt";
-    
+
     /**
      * Static helper to find and extract a search term from the given file
      * 
-     * @param testFileService           the test files
-     * @param searchTermsFilename       the name of the file to find
-     * @return                          a list of search terms (empty if there are none or the remote file does not exist)
+     * @param testFileService
+     *            the test files
+     * @param searchTermsFilename
+     *            the name of the file to find
+     * @return a list of search terms (empty if there are none or the remote
+     *         file does not exist)
      */
-    public static String[] getSearchStrings(TestFileService testFileService, String searchTermsFilename)
+    public static String[] getSearchStrings(TestFileService testFileService,
+            String searchTermsFilename)
     {
         File file = testFileService.getFileByName(searchTermsFilename);
         if (file == null)
@@ -122,7 +116,8 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
             // Check
             if (strings.size() == 0)
             {
-                throw new RuntimeException("No search strings in file: " + searchTermsFilename);
+                throw new RuntimeException("No search strings in file: "
+                        + searchTermsFilename);
             }
             // Push into an array
             return (String[]) strings.toArray(new String[strings.size()]);
@@ -130,19 +125,26 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
         catch (IOException e)
         {
             throw new RuntimeException(
-                    "Failed to read search strings from file '" + file +
-                    "' loaded as '" + searchTermsFilename);
+                    "Failed to read search strings from file '" + file
+                            + "' loaded as '" + searchTermsFilename);
         }
         finally
         {
             if (fr != null)
             {
-                try { fr.close(); } catch (IOException e) {}
+                try
+                {
+                    fr.close();
+                }
+                catch (IOException e)
+                {
+                }
             }
         }
     }
-    
+
     private static final Random RANDOM = new Random();
+
     /**
      * Choose a random string from the search strings provided
      */
@@ -150,7 +152,8 @@ public abstract class AbstractCMISEventProcessor extends AbstractEventProcessor
     {
         if (searchStrings == null || searchStrings.length == 0)
         {
-            throw new IllegalArgumentException("No search strings to choose from.");
+            throw new IllegalArgumentException(
+                    "No search strings to choose from.");
         }
         return searchStrings[RANDOM.nextInt(searchStrings.length)];
     }

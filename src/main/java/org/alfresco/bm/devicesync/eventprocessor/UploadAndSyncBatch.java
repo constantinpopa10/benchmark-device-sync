@@ -23,8 +23,9 @@ import com.mongodb.DBObject;
 /**
  * Prepare as much DesktopSync client data as configured.
  * 
- * In this class the configured values are combined with a site in Alfresco (created by a former run of data load
- * benchmark test) and the user data of the site manager. The user data was created by the initial sign-up benchmark
+ * In this class the configured values are combined with a site in Alfresco
+ * (created by a former run of data load benchmark test) and the user data of
+ * the site manager. The user data was created by the initial sign-up benchmark
  * test run.
  * 
  * @author sglover
@@ -48,21 +49,28 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
     private final String eventNameUploadFile;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public UploadAndSyncBatch(SubscriptionsService subscriptionsService, SiteSampleSelector siteSampleSelector,
-    		int batchSize, int numBatches, int waitTimeBetweenBatches, int waitTimeBetweenUploadAndSync,
-    		String eventNameStartSync, String eventNameUploadFile)
+    public UploadAndSyncBatch(SubscriptionsService subscriptionsService,
+            SiteSampleSelector siteSampleSelector, int batchSize,
+            int numBatches, int waitTimeBetweenBatches,
+            int waitTimeBetweenUploadAndSync, String eventNameStartSync,
+            String eventNameUploadFile)
     {
-    	this.subscriptionsService = subscriptionsService;
-    	this.siteSampleSelector = siteSampleSelector;
-    	this.batchSize = batchSize;
+        this.subscriptionsService = subscriptionsService;
+        this.siteSampleSelector = siteSampleSelector;
+        this.batchSize = batchSize;
         this.numBatches = numBatches;
         this.eventNameStartSync = eventNameStartSync;
         this.waitTimeBetweenUploadAndSync = waitTimeBetweenUploadAndSync;
@@ -76,62 +84,68 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	DBObject dbObject = (DBObject)event.getData();
-    	SyncBatchData syncBatchData = SyncBatchData.fromDBObject(dbObject);
-    	int count = syncBatchData.getCount();
-    	List<String> sites = syncBatchData.getSites();
+        DBObject dbObject = (DBObject) event.getData();
+        SyncBatchData syncBatchData = SyncBatchData.fromDBObject(dbObject);
+        int count = syncBatchData.getCount();
+        List<String> sites = syncBatchData.getSites();
 
         try
         {
-        	String msg = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<Event>();
 
-            long numSubscriptions = subscriptionsService.countSubscriptions(DataCreationState.Created);
-            if(numSubscriptions == 0)
+            long numSubscriptions = subscriptionsService
+                    .countSubscriptions(DataCreationState.Created);
+            if (numSubscriptions == 0)
             {
-	            msg = "No subscriptions, stopping.";
+                msg = "No subscriptions, stopping.";
             }
-            else if(count >= numBatches)
+            else if (count >= numBatches)
             {
-            	msg = "Hit number of batches, stopping.";
+                msg = "Hit number of batches, stopping.";
             }
             else
             {
-        		long uploadScheduledTime = System.currentTimeMillis();
+                long uploadScheduledTime = System.currentTimeMillis();
 
-        		try(Stream<UploadFileData> subscriptions = siteSampleSelector.getSubscriptions(batchSize))
-        		{
-        			List<Event> events = subscriptions.flatMap(ufd ->
-        			{
-	                	List<Event> ret = new LinkedList<>();
+                try (Stream<UploadFileData> subscriptions = siteSampleSelector
+                        .getSubscriptions(batchSize))
+                {
+                    List<Event> events = subscriptions.flatMap(
+                            ufd -> {
+                                List<Event> ret = new LinkedList<>();
 
-	                	Event uploadFileEvent = new Event(eventNameUploadFile, uploadScheduledTime,
-	                			ufd.toDBObject());
-	                	ret.add(uploadFileEvent);
+                                Event uploadFileEvent = new Event(
+                                        eventNameUploadFile,
+                                        uploadScheduledTime, ufd.toDBObject());
+                                ret.add(uploadFileEvent);
 
-                		SyncData syncData = new SyncData(ufd.getSiteId(),
-                				ufd.getUsername(),
-                				ufd.getSubscriberId(),
-                				ufd.getSubscriptionId(), null);
-                    	Event syncEvent = new Event(eventNameStartSync, uploadScheduledTime + waitTimeBetweenUploadAndSync,
-                    			syncData.toDBObject());
-                    	ret.add(syncEvent);
+                                SyncData syncData = new SyncData(ufd
+                                        .getSiteId(), ufd.getUsername(), ufd
+                                        .getSubscriberId(), ufd
+                                        .getSubscriptionId(), null);
+                                Event syncEvent = new Event(eventNameStartSync,
+                                        uploadScheduledTime
+                                                + waitTimeBetweenUploadAndSync,
+                                        syncData.toDBObject());
+                                ret.add(syncEvent);
 
-	                	return ret.stream();
-            		})
-            		.collect(Collectors.toList());
+                                return ret.stream();
+                            }).collect(Collectors.toList());
 
-        			nextEvents.addAll(events);
-        		}
+                    nextEvents.addAll(events);
+                }
 
-            	{
-	            	SyncBatchData newSyncBatchData = new SyncBatchData(count + 1, sites);
-	            	Event nextEvent = new Event(event.getName(), uploadScheduledTime + waitTimeBetweenBatches,
-	            			newSyncBatchData.toDBObject());
-	            	nextEvents.add(nextEvent);
-            	}
+                {
+                    SyncBatchData newSyncBatchData = new SyncBatchData(
+                            count + 1, sites);
+                    Event nextEvent = new Event(event.getName(),
+                            uploadScheduledTime + waitTimeBetweenBatches,
+                            newSyncBatchData.toDBObject());
+                    nextEvents.add(nextEvent);
+                }
 
-	            msg = "Prepared " + batchSize + " overlapping syncs";
+                msg = "Prepared " + batchSize + " overlapping syncs";
             }
 
             EventResult result = new EventResult(msg, nextEvents);

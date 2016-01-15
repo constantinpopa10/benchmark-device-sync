@@ -42,8 +42,8 @@ public class TreeWalkBatchData implements Serializable
 
     public DBObject toDBObject()
     {
-        BasicDBObjectBuilder builder = BasicDBObjectBuilder
-                .start("count", count);
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start("count",
+                count);
         if (sites != null)
         {
             builder.add("sites", sites);
@@ -55,8 +55,8 @@ public class TreeWalkBatchData implements Serializable
     @SuppressWarnings("unchecked")
     public static TreeWalkBatchData fromDBObject(DBObject dbObject)
     {
-        int count = (Integer)dbObject.get("count");
-        List<String> sites = (List<String>)dbObject.get("sites");
+        int count = (Integer) dbObject.get("count");
+        List<String> sites = (List<String>) dbObject.get("sites");
         TreeWalkBatchData treeWalkData = new TreeWalkBatchData(count, sites);
         return treeWalkData;
     }

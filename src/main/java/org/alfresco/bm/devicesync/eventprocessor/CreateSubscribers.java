@@ -36,18 +36,25 @@ public class CreateSubscribers extends AbstractEventProcessor
     private final PublicApiFactory publicApiFactory;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public CreateSubscribers(SubscribersService subscribersService, PublicApiFactory publicApiFactory, int batchSize,
-    		String eventNamePrepareSubscriptions, String eventNameCreateSubscribers)
+    public CreateSubscribers(SubscribersService subscribersService,
+            PublicApiFactory publicApiFactory, int batchSize,
+            String eventNamePrepareSubscriptions,
+            String eventNameCreateSubscribers)
     {
-    	this.subscribersService = subscribersService;
+        this.subscribersService = subscribersService;
         this.batchSize = batchSize;
         this.publicApiFactory = publicApiFactory;
         this.eventNamePrepareSubscriptions = eventNamePrepareSubscriptions;
@@ -55,15 +62,17 @@ public class CreateSubscribers extends AbstractEventProcessor
 
         // validate arguments
         Util.checkArgumentNotNull(subscribersService, "subscribersService");
-        Util.checkArgumentNotNull(eventNameCreateSubscribers, "eventNameCreateSubscribers");
-        Util.checkArgumentNotNull(eventNamePrepareSubscriptions, "eventNamePrepareSubscriptions");
+        Util.checkArgumentNotNull(eventNameCreateSubscribers,
+                "eventNameCreateSubscribers");
+        Util.checkArgumentNotNull(eventNamePrepareSubscriptions,
+                "eventNamePrepareSubscriptions");
         Util.checkArgumentNotNull(publicApiFactory, "publicApiFactory");
     }
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
@@ -71,44 +80,57 @@ public class CreateSubscribers extends AbstractEventProcessor
     {
         try
         {
-        	String msg  = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<>();
 
-            long numSubscribers = subscribersService.countSubscribers(DataCreationState.Scheduled);
-            if(numSubscribers == 0)
+            long numSubscribers = subscribersService
+                    .countSubscribers(DataCreationState.Scheduled);
+            if (numSubscribers == 0)
             {
                 long time = System.currentTimeMillis() + 5000L;
-                Event nextEvent = new Event(eventNamePrepareSubscriptions, time, null);
+                Event nextEvent = new Event(eventNamePrepareSubscriptions,
+                        time, null);
                 nextEvents.add(nextEvent);
-                msg = "Created all subscribers and raising '" + nextEvent.getName()
-                        + "' event.";
+                msg = "Created all subscribers and raising '"
+                        + nextEvent.getName() + "' event.";
             }
             else
             {
-                List<SubscriberData> subscribers = subscribersService.getSubscribers(DataCreationState.Scheduled, 0, batchSize);
-                subscribers.stream().forEach(subscriberData -> {
-            		String username = subscriberData.getUsername();
-            		Alfresco alfresco = getAlfresco(username);
-                	try
-                	{
-                		Subscriber subscriber = alfresco.createSubscriber("-default-", "test");
-                    	subscribersService.updateSubscriber(subscriberData.getObjectId(), subscriber.getId(),
-                    			DataCreationState.Created);
-                	}
-                	catch(Exception e)
-                	{
-                    	subscribersService.updateSubscriber(subscriberData.getObjectId(), DataCreationState.Failed);
-                	}
-                });
-//                .forEach(subscriberData -> {
-//                	subscribersService.updateSubscriber(subscriberData.getObjectId(), subscriberData.getSubscriberId(),
-//                			DataCreationState.Created);
-//                });
+                List<SubscriberData> subscribers = subscribersService
+                        .getSubscribers(DataCreationState.Scheduled, 0,
+                                batchSize);
+                subscribers.stream().forEach(
+                        subscriberData -> {
+                            String username = subscriberData.getUsername();
+                            Alfresco alfresco = getAlfresco(username);
+                            try
+                            {
+                                Subscriber subscriber = alfresco
+                                        .createSubscriber("-default-", "test");
+                                subscribersService.updateSubscriber(
+                                        subscriberData.getObjectId(),
+                                        subscriber.getId(),
+                                        DataCreationState.Created);
+                            }
+                            catch (Exception e)
+                            {
+                                subscribersService.updateSubscriber(
+                                        subscriberData.getObjectId(),
+                                        DataCreationState.Failed);
+                            }
+                        });
+                // .forEach(subscriberData -> {
+                // subscribersService.updateSubscriber(subscriberData.getObjectId(),
+                // subscriberData.getSubscriberId(),
+                // DataCreationState.Created);
+                // });
 
                 long time = System.currentTimeMillis() + 5000L;
-                Event nextEvent = new Event(eventNameCreateSubscribers, time, null);
+                Event nextEvent = new Event(eventNameCreateSubscribers, time,
+                        null);
                 nextEvents.add(nextEvent);
-                msg = "Created " + subscribers.size() + " subscribers and raising '" + nextEvent.getName()
+                msg = "Created " + subscribers.size()
+                        + " subscribers and raising '" + nextEvent.getName()
                         + "' event.";
             }
 

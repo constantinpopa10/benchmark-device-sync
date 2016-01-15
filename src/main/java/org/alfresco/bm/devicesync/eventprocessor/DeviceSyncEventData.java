@@ -6,13 +6,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Wrapper for DesktopSync Client Data to exchange between {@link AbstractEventProcessor} classes to execute the
- * benchmark test.
+ * Wrapper for DesktopSync Client Data to exchange between
+ * {@link AbstractEventProcessor} classes to execute the benchmark test.
  * 
  * Notes:
  * 
- * 1. this class is NOT serializable to ensure the benchmark test runs on the creating server only. 2. The number of
- * operations is only a field here and will not be altered by any "internal" operation. Please use
+ * 1. this class is NOT serializable to ensure the benchmark test runs on the
+ * creating server only. 2. The number of operations is only a field here and
+ * will not be altered by any "internal" operation. Please use
  * {@link increaseNumberOfOperations} instead.
  * 
  * @author Frank Becker
@@ -21,23 +22,26 @@ import org.apache.commons.logging.LogFactory;
 public class DeviceSyncEventData
 {
     /** Logger for the class */
-    private static final Log logger = LogFactory.getLog(DeviceSyncEventData.class);
+    private static final Log logger = LogFactory
+            .getLog(DeviceSyncEventData.class);
 
     /** stores the session ID */
     private final String sessionId;
 
     /**
-     * counts number of operations on the client described by the create data of this
+     * counts number of operations on the client described by the create data of
+     * this
      * 
-     * Note: this value will NOT be altered by any operation in this class. Please call
-     * {@link increaseNumberOfOperations} instead.
+     * Note: this value will NOT be altered by any operation in this class.
+     * Please call {@link increaseNumberOfOperations} instead.
      */
     private int numberOfOperations = 0;
 
     /**
      * Constructor.
      * 
-     * Note: the client itself must be created by a separate call to {@link createClient}.
+     * Note: the client itself must be created by a separate call to
+     * {@link createClient}.
      * 
      * @param clientRegistry_p
      *            (DesktopSyncClientRegistry) registry to create clients.
@@ -55,12 +59,14 @@ public class DeviceSyncEventData
 
         if (logger.isDebugEnabled())
         {
-            logger.debug("Event data object created for session '" + this.sessionId + "'");
+            logger.debug("Event data object created for session '"
+                    + this.sessionId + "'");
         }
     }
 
     /**
-     * @return number of operations on the client described by the create data of this
+     * @return number of operations on the client described by the create data
+     *         of this
      */
     public int getNumberOfOperations()
     {
@@ -68,7 +74,8 @@ public class DeviceSyncEventData
     }
 
     /**
-     * Increases the number of operations on the client described by the create data of this
+     * Increases the number of operations on the client described by the create
+     * data of this
      */
     public void increaseNumberOfOperations()
     {
@@ -76,7 +83,7 @@ public class DeviceSyncEventData
         {
             logger.debug("increaseNumberOfOperations: " + sessionId);
         }
-        
+
         this.numberOfOperations++;
     }
 

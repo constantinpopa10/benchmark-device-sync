@@ -13,10 +13,17 @@ import org.bson.types.ObjectId;
  */
 public interface SyncsService
 {
-	List<SyncData> getSyncs(SyncState state, int skip, int count);
-	void addSync(String username, String subscriberId, String subscriptionId, SyncState syncState);
-	void updateSync(ObjectId objectId, SyncState syncState, String message);
-	void updateSync(String syncId, SyncState syncState, String message);
-	void updateSync(ObjectId objectId, String syncId, SyncState syncState, String message);
-	long countSyncs(SyncState state);
+    List<SyncData> getSyncs(SyncState state, int skip, int count);
+
+    void addSync(String username, String subscriberId, String subscriptionId,
+            SyncState syncState);
+
+    void updateSync(ObjectId objectId, SyncState syncState, String message);
+
+    void updateSync(String syncId, SyncState syncState, String message);
+
+    void updateSync(ObjectId objectId, String syncId, SyncState syncState,
+            String message);
+
+    long countSyncs(SyncState state);
 }

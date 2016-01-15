@@ -13,6 +13,6 @@ import org.alfresco.bm.site.SiteMemberData;
  */
 public interface ExtendedSiteDataService extends SiteDataService
 {
-	Stream<SiteMemberData> randomSiteMembers(DataCreationState state, String[] roles,
-			int max);
+    Stream<SiteMemberData> randomSiteMembers(DataCreationState state,
+            String[] roles, int max);
 }

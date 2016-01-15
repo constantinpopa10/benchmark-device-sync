@@ -15,14 +15,26 @@ import org.springframework.social.alfresco.api.entities.Subscriber;
  */
 public interface SubscribersService
 {
-	void addSubscriber(String username, DataCreationState state);
-	void addSubscriber(String username, String subscriberId, String syncServiceURI, DataCreationState state);
-	void removeSubscriber(String subscriberId);
-	void updateSubscriber(ObjectId objectId, String subscriberId, DataCreationState state);
-	void updateSubscriber(ObjectId objectId, DataCreationState state);
-	String getSubscriber(String username);
-	List<SubscriberData> getSubscribers(DataCreationState creationState, int skip, int count);
-	long countSubscribers(DataCreationState state);
-	SubscriberData getRandomSubscriber(String username);
-	Stream<SubscriberData> randomSubscribers(int batchSize);
+    void addSubscriber(String username, DataCreationState state);
+
+    void addSubscriber(String username, String subscriberId,
+            String syncServiceURI, DataCreationState state);
+
+    void removeSubscriber(String subscriberId);
+
+    void updateSubscriber(ObjectId objectId, String subscriberId,
+            DataCreationState state);
+
+    void updateSubscriber(ObjectId objectId, DataCreationState state);
+
+    String getSubscriber(String username);
+
+    List<SubscriberData> getSubscribers(DataCreationState creationState,
+            int skip, int count);
+
+    long countSubscribers(DataCreationState state);
+
+    SubscriberData getRandomSubscriber(String username);
+
+    Stream<SubscriberData> randomSubscribers(int batchSize);
 }

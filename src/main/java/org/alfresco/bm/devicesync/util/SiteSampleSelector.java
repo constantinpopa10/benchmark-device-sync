@@ -26,86 +26,95 @@ public class SiteSampleSelector
 {
     private static Log logger = LogFactory.getLog(SiteSampleSelector.class);
 
-	private final SiteDataService siteDataService;
-	private final SubscriptionsService subscriptionsService;
-	private final NodesDataService nodesDataService;
+    private final SiteDataService siteDataService;
+    private final SubscriptionsService subscriptionsService;
+    private final NodesDataService nodesDataService;
     private final int sitesLimit;
     private List<String> sites = new LinkedList<>();
 
     private Random random = new Random(System.currentTimeMillis());
 
-    public SiteSampleSelector(SiteDataService siteDataService, SubscriptionsService subscriptionsService,
-    		NodesDataService nodesDataService, int sitesLimit)
+    public SiteSampleSelector(SiteDataService siteDataService,
+            SubscriptionsService subscriptionsService,
+            NodesDataService nodesDataService, int sitesLimit)
     {
-    	this.siteDataService = siteDataService;
-    	this.subscriptionsService = subscriptionsService;
-    	this.nodesDataService = nodesDataService;
+        this.siteDataService = siteDataService;
+        this.subscriptionsService = subscriptionsService;
+        this.nodesDataService = nodesDataService;
         this.sitesLimit = sitesLimit;
 
-    	if(sitesLimit > -1)
-    	{
-    		for(int i = 0; i < sitesLimit; i++)
-    		{
-    			SiteData siteData = siteDataService.randomSite("default", DataCreationState.Created);
-    			String siteId = siteData.getSiteId();
-    			sites.add(siteId);
-    		}
-    	}
+        if (sitesLimit > -1)
+        {
+            for (int i = 0; i < sitesLimit; i++)
+            {
+                SiteData siteData = siteDataService.randomSite("default",
+                        DataCreationState.Created);
+                String siteId = siteData.getSiteId();
+                sites.add(siteId);
+            }
+        }
     }
 
     public String getSite()
     {
-    	String siteId = null;
+        String siteId = null;
 
-		if(sitesLimit > -1)
-		{
-			int idx = random.nextInt(sites.size());
-			siteId = sites.get(idx);
-		}
-		else
-		{
-			SiteData siteData = siteDataService.randomSite("default", DataCreationState.Created);
-			siteId = siteData.getSiteId();
-		}
+        if (sitesLimit > -1)
+        {
+            int idx = random.nextInt(sites.size());
+            siteId = sites.get(idx);
+        }
+        else
+        {
+            SiteData siteData = siteDataService.randomSite("default",
+                    DataCreationState.Created);
+            siteId = siteData.getSiteId();
+        }
 
-		return siteId;
+        return siteId;
     }
 
     public Stream<UploadFileData> getSubscriptions(int max)
     {
-    	Stream<SubscriptionData> subscriptions = subscriptionsService.getRandomSubscriptions(null, max);
-    	Stream<UploadFileData> ret = subscriptions.map(subscriptionData ->
-    	{
-    		String siteId = subscriptionData.getSiteId();
-    		String username = subscriptionData.getUsername();
-    		String subscriberId = subscriptionData.getSubscriberId();
-    		String subscriptionId = subscriptionData.getSubscriptionId();
+        Stream<SubscriptionData> subscriptions = subscriptionsService
+                .getRandomSubscriptions(null, max);
+        Stream<UploadFileData> ret = subscriptions
+                .map(subscriptionData -> {
+                    String siteId = subscriptionData.getSiteId();
+                    String username = subscriptionData.getUsername();
+                    String subscriberId = subscriptionData.getSubscriberId();
+                    String subscriptionId = subscriptionData
+                            .getSubscriptionId();
 
-    		logger.debug("Random site " + siteId + ", subscription " + subscriptionData);
+                    logger.debug("Random site " + siteId + ", subscription "
+                            + subscriptionData);
 
-    		SiteMemberData siteMemberData = siteDataService.getSiteMember(siteId, username);
-    		String siteRole = siteMemberData.getRole();
+                    SiteMemberData siteMemberData = siteDataService
+                            .getSiteMember(siteId, username);
+                    String siteRole = siteMemberData.getRole();
 
-    		PathInfo pathInfo = nodesDataService.randomNodeInSite(siteId);
-    		UploadFileData uploadFileData = null;
-    		if(pathInfo != null)
-    		{
-	    		String path = pathInfo.getPath();
-	    		Integer numChildren = pathInfo.getNumChildren();
-	    		Integer numChildFolders = pathInfo.getNumChildFolders();
-	    		String nodeType = pathInfo.getNodeType();
-	    		String nodeId = pathInfo.getNodeId();
-	    		List<List<String>> parentNodeIds = pathInfo.getParentNodeIds();
-	
-	    		uploadFileData = new UploadFileData(username, subscriberId, subscriptionId,
-	    				siteId, siteRole, path, numChildren, numChildFolders, nodeId, nodeType,
-	    				parentNodeIds);
-    		}
+                    PathInfo pathInfo = nodesDataService
+                            .randomNodeInSite(siteId);
+                    UploadFileData uploadFileData = null;
+                    if (pathInfo != null)
+                    {
+                        String path = pathInfo.getPath();
+                        Integer numChildren = pathInfo.getNumChildren();
+                        Integer numChildFolders = pathInfo.getNumChildFolders();
+                        String nodeType = pathInfo.getNodeType();
+                        String nodeId = pathInfo.getNodeId();
+                        List<List<String>> parentNodeIds = pathInfo
+                                .getParentNodeIds();
 
-    		return uploadFileData;
-    	})
-    	.filter(ufd -> ufd != null);
+                        uploadFileData = new UploadFileData(username,
+                                subscriberId, subscriptionId, siteId, siteRole,
+                                path, numChildren, numChildFolders, nodeId,
+                                nodeType, parentNodeIds);
+                    }
 
-    	return ret;
+                    return uploadFileData;
+                }).filter(ufd -> ufd != null);
+
+        return ret;
     }
 }

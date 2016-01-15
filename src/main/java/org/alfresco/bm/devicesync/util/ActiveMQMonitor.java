@@ -300,15 +300,17 @@ public class ActiveMQMonitor
         ActiveMQStats activeMQStats = new ActiveMQStats();
         BrokerStats brokerStats = getBrokerStats();
         activeMQStats.withBrokerStats(brokerStats);
-        DestinationStats destStats = getStats("Topic",
-                "alfresco.repo.events.nodes");
+//        DestinationStats destStats = getStats("Topic",
+//                "alfresco.repo.events.nodes");
+        DestinationStats destStats = getStats("Queue",
+                "Consumer.DesktopSync.VirtualTopic.alfresco.repo.events.nodes");
         activeMQStats.addDestinationStats(destStats);
-        destStats = getStats("Queue", "alfresco.sync.changes.request");
-        activeMQStats.addDestinationStats(destStats);
-        destStats = getStats("Queue", "alfresco.sync.changes.response");
-        activeMQStats.addDestinationStats(destStats);
-        destStats = getStats("Queue", "alfresco.sync.changes.clear");
-        activeMQStats.addDestinationStats(destStats);
+//        destStats = getStats("Queue", "alfresco.sync.changes.request");
+//        activeMQStats.addDestinationStats(destStats);
+//        destStats = getStats("Queue", "alfresco.sync.changes.response");
+//        activeMQStats.addDestinationStats(destStats);
+//        destStats = getStats("Queue", "alfresco.sync.changes.clear");
+//        activeMQStats.addDestinationStats(destStats);
         return activeMQStats;
     }
 
@@ -331,15 +333,15 @@ public class ActiveMQMonitor
         CloseableHttpClient client = HttpClients.custom()
                 .setConnectionManager(poolingConnManager)
                 .setDefaultRequestConfig(config)
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
+                .setDefaultCredentialsProvider(credsProvider).build();
         return client;
     }
 
     private DestinationStats getStats(String destinationType,
             String destinationName) throws IOException
     {
-        DestinationStats stats = new DestinationStats(destinationType, destinationName);
+        DestinationStats stats = new DestinationStats(destinationType,
+                destinationName);
 
         StringBuilder sb = new StringBuilder("http://");
         sb.append(activeMQHost);
@@ -494,11 +496,11 @@ public class ActiveMQMonitor
         }
         finally
         {
-            if(httpResponse != null)
+            if (httpResponse != null)
             {
                 httpResponse.close();
             }
-            if(httpPost != null)
+            if (httpPost != null)
             {
                 httpPost.releaseConnection();
             }
@@ -565,14 +567,16 @@ public class ActiveMQMonitor
                         {
                             double memoryPercentUsage = r.getValue() != null ? r
                                     .getValue() : 0.0;
-                            brokerStats.withMemoryPercentUsage(memoryPercentUsage);
+                            brokerStats
+                                    .withMemoryPercentUsage(memoryPercentUsage);
                         }
                         else if (r.getRequest().getAttribute()
                                 .equals("StorePercentUsage"))
                         {
                             double storePercentUsage = r.getValue() != null ? r
                                     .getValue() : 0.0;
-                            brokerStats.withStorePercentUsage(storePercentUsage);
+                            brokerStats
+                                    .withStorePercentUsage(storePercentUsage);
                         }
                         else if (r.getRequest().getAttribute()
                                 .equals("TempPercentUsage"))
@@ -598,11 +602,11 @@ public class ActiveMQMonitor
         }
         finally
         {
-            if(httpResponse != null)
+            if (httpResponse != null)
             {
                 httpResponse.close();
             }
-            if(httpPost != null)
+            if (httpPost != null)
             {
                 httpPost.releaseConnection();
             }

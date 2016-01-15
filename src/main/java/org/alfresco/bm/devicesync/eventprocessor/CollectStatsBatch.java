@@ -28,52 +28,63 @@ public class CollectStatsBatch extends AbstractEventProcessor
     private final int waitTimeBetweenBatches; // ms
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public CollectStatsBatch(int numBatches, int waitTimeBetweenBatches, String eventNameCollectStats)
+    public CollectStatsBatch(int numBatches, int waitTimeBetweenBatches,
+            String eventNameCollectStats)
     {
-    	this.eventNameCollectStats = eventNameCollectStats;
-    	this.numBatches = numBatches;
-    	this.waitTimeBetweenBatches = waitTimeBetweenBatches; 
+        this.eventNameCollectStats = eventNameCollectStats;
+        this.numBatches = numBatches;
+        this.waitTimeBetweenBatches = waitTimeBetweenBatches;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	DBObject dbObject = (DBObject)event.getData();
-    	CollectStatsBatchData collectStatsBatchData = CollectStatsBatchData.fromDBObject(dbObject);
-    	int count = collectStatsBatchData.getCount();
+        DBObject dbObject = (DBObject) event.getData();
+        CollectStatsBatchData collectStatsBatchData = CollectStatsBatchData
+                .fromDBObject(dbObject);
+        int count = collectStatsBatchData.getCount();
 
         try
         {
             List<Event> nextEvents = new LinkedList<>();
             String msg = null;
 
-            if(count >= numBatches)
+            if (count >= numBatches)
             {
-            	msg = "Hit number of batches, stopping.";
+                msg = "Hit number of batches, stopping.";
             }
             else
             {
-	        	{
-                	Event nextEvent = new Event(eventNameCollectStats, System.currentTimeMillis(), null);
-                	nextEvents.add(nextEvent);
-	        	}
-	
-	        	{
-	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
-	            	CollectStatsBatchData newCollectStatsBatchData = new CollectStatsBatchData(count + 1);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newCollectStatsBatchData.toDBObject());
-	            	nextEvents.add(nextEvent);
-	        	}
+                {
+                    Event nextEvent = new Event(eventNameCollectStats,
+                            System.currentTimeMillis(), null);
+                    nextEvents.add(nextEvent);
+                }
 
-	        	msg = "Created collect stats";
+                {
+                    long scheduledTime = System.currentTimeMillis()
+                            + waitTimeBetweenBatches;
+                    CollectStatsBatchData newCollectStatsBatchData = new CollectStatsBatchData(
+                            count + 1);
+                    Event nextEvent = new Event(event.getName(), scheduledTime,
+                            newCollectStatsBatchData.toDBObject());
+                    nextEvents.add(nextEvent);
+                }
+
+                msg = "Created collect stats";
             }
 
             if (logger.isDebugEnabled())

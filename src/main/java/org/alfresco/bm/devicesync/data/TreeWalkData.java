@@ -23,14 +23,14 @@ public class TreeWalkData implements Serializable
 
     private static final long serialVersionUID = 946578159221599841L;
 
-    private int numFolders;
-    private int numDocuments;
-    private String username;
-    private String siteId;
-    private int totalContentSize = 0;
-    private int maxContentSize = 0;
-    private int minContentSize = -1;
-    private int maxFolderDepth = 0;
+    protected int numFolders;
+    protected int numDocuments;
+    protected String username;
+    protected String siteId;
+    protected int totalContentSize = 0;
+    protected int maxContentSize = 0;
+    protected int minContentSize = -1;
+    protected int maxFolderDepth = 0;
 
     public TreeWalkData(int numFolders, int numDocuments)
     {
@@ -116,7 +116,7 @@ public class TreeWalkData implements Serializable
 
     public void updateMaxContentSize(int size)
     {
-        if(size > maxContentSize)
+        if (size > maxContentSize)
         {
             maxContentSize = size;
         }
@@ -124,11 +124,11 @@ public class TreeWalkData implements Serializable
 
     public void updateMinContentSize(int size)
     {
-        if(minContentSize == -1)
+        if (minContentSize == -1)
         {
             minContentSize = Integer.MAX_VALUE;
         }
-        else if(size < minContentSize)
+        else if (size < minContentSize)
         {
             minContentSize = size;
         }
@@ -164,8 +164,7 @@ public class TreeWalkData implements Serializable
         BasicDBObjectBuilder builder = BasicDBObjectBuilder
                 .start(FIELD_NUM_DOCUMENTS, numDocuments)
                 .add(FIELD_NUM_FOLDERS, numFolders)
-                .add(FIELD_USERNAME, username)
-                .add(FIELD_SITE_ID, siteId)
+                .add(FIELD_USERNAME, username).add(FIELD_SITE_ID, siteId)
                 .add(FIELD_MAX_CONTENT_SIZE, maxContentSize)
                 .add(FIELD_MIN_CONTENT_SIZE, minContentSize)
                 .add(FIELD_TOTAL_CONTENT_SIZE, totalContentSize)
@@ -182,11 +181,12 @@ public class TreeWalkData implements Serializable
         String siteId = (String) dbObject.get(FIELD_SITE_ID);
         Integer maxContentSize = (Integer) dbObject.get(FIELD_MAX_CONTENT_SIZE);
         Integer minContentSize = (Integer) dbObject.get(FIELD_MIN_CONTENT_SIZE);
-        Integer totalContentSize = (Integer) dbObject.get(FIELD_TOTAL_CONTENT_SIZE);
+        Integer totalContentSize = (Integer) dbObject
+                .get(FIELD_TOTAL_CONTENT_SIZE);
         Integer maxFolderDepth = (Integer) dbObject.get(FIELD_MAX_FOLDER_DEPTH);
         TreeWalkData treeWalkData = new TreeWalkData(numFolders, numDocuments,
-                username, siteId, totalContentSize, maxContentSize, minContentSize,
-                maxFolderDepth);
+                username, siteId, totalContentSize, maxContentSize,
+                minContentSize, maxFolderDepth);
         return treeWalkData;
     }
 }

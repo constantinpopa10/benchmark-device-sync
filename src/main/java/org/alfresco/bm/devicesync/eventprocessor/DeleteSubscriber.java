@@ -28,17 +28,23 @@ public class DeleteSubscriber extends AbstractEventProcessor
     private final PublicApiFactory publicApiFactory;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public DeleteSubscriber(SubscribersService subscribersService, PublicApiFactory publicApiFactory)
+    public DeleteSubscriber(SubscribersService subscribersService,
+            PublicApiFactory publicApiFactory)
     {
-    	this.subscribersService = subscribersService;
+        this.subscribersService = subscribersService;
         this.publicApiFactory = publicApiFactory;
 
         // validate arguments
@@ -48,8 +54,8 @@ public class DeleteSubscriber extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
@@ -57,17 +63,18 @@ public class DeleteSubscriber extends AbstractEventProcessor
     {
         try
         {
-        	String username = (String)event.getData();
+            String username = (String) event.getData();
 
-    		Alfresco alfresco = getAlfresco(username);
+            Alfresco alfresco = getAlfresco(username);
 
-    		SubscriberData subscriberData = subscribersService.getRandomSubscriber(username);
-    		String subscriberId = subscriberData.getSubscriberId();
-    		alfresco.removeSubscriber("-default-", subscriberId);
-        	subscribersService.removeSubscriber(subscriberId);
+            SubscriberData subscriberData = subscribersService
+                    .getRandomSubscriber(username);
+            String subscriberId = subscriberData.getSubscriberId();
+            alfresco.removeSubscriber("-default-", subscriberId);
+            subscribersService.removeSubscriber(subscriberId);
 
             List<Event> nextEvents = new LinkedList<>();
-        	String msg = "Removed subscriber " + subscriberData;
+            String msg = "Removed subscriber " + subscriberData;
 
             EventResult result = new EventResult(msg, nextEvents);
 

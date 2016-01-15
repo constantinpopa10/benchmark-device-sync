@@ -22,8 +22,9 @@ import com.mongodb.DBObject;
 /**
  * Prepare as much DesktopSync client data as configured.
  * 
- * In this class the configured values are combined with a site in Alfresco (created by a former run of data load
- * benchmark test) and the user data of the site manager. The user data was created by the initial sign-up benchmark
+ * In this class the configured values are combined with a site in Alfresco
+ * (created by a former run of data load benchmark test) and the user data of
+ * the site manager. The user data was created by the initial sign-up benchmark
  * test run.
  * 
  * @author sglover
@@ -44,21 +45,27 @@ public class UploadFileBatch extends AbstractEventProcessor
     private final String eventNameUploadFile;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public UploadFileBatch(SiteSampleSelector siteSampleSelector, SubscriptionsService subscriptionsService,
-    		int batchSize, int numBatches,
-    		int waitTimeBetweenBatches, String eventNameUploadFile)
+    public UploadFileBatch(SiteSampleSelector siteSampleSelector,
+            SubscriptionsService subscriptionsService, int batchSize,
+            int numBatches, int waitTimeBetweenBatches,
+            String eventNameUploadFile)
     {
-    	this.siteSampleSelector = siteSampleSelector;
-    	this.subscriptionsService = subscriptionsService;
-    	this.batchSize = batchSize;
+        this.siteSampleSelector = siteSampleSelector;
+        this.subscriptionsService = subscriptionsService;
+        this.batchSize = batchSize;
         this.numBatches = numBatches;
         this.eventNameUploadFile = eventNameUploadFile;
         this.waitTimeBetweenBatches = waitTimeBetweenBatches;
@@ -67,51 +74,58 @@ public class UploadFileBatch extends AbstractEventProcessor
         Util.checkArgumentNotNull(subscriptionsService, "subscriptionsService");
     }
 
-
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	DBObject dbObject = (DBObject)event.getData();
-    	UploadFileBatchData uploadFileBatchData = UploadFileBatchData.fromDBObject(dbObject);
-    	int count = uploadFileBatchData.getCount();
+        DBObject dbObject = (DBObject) event.getData();
+        UploadFileBatchData uploadFileBatchData = UploadFileBatchData
+                .fromDBObject(dbObject);
+        int count = uploadFileBatchData.getCount();
 
         try
         {
-        	String msg = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<Event>();
 
-            long numSubscriptions = subscriptionsService.countSubscriptions(DataCreationState.Created);
-            if(numSubscriptions == 0)
+            long numSubscriptions = subscriptionsService
+                    .countSubscriptions(DataCreationState.Created);
+            if (numSubscriptions == 0)
             {
-	            msg = "No subscriptions, stopping.";
+                msg = "No subscriptions, stopping.";
             }
-            else if(count >= numBatches)
+            else if (count >= numBatches)
             {
-            	msg = "Hit number of batches, stopping.";
+                msg = "Hit number of batches, stopping.";
             }
             else
             {
-            	{
-            		try(Stream<UploadFileData> subscriptions = siteSampleSelector.getSubscriptions(batchSize))
-            		{
-            			List<Event> events = subscriptions.map(ufd -> {
-		                	Event nextEvent = new Event(eventNameUploadFile, System.currentTimeMillis(),
-		                			ufd.toDBObject());
-		                	return nextEvent;
-	            		})
-	            		.collect(Collectors.toList());
-	            		nextEvents.addAll(events);
-            		}
-            	}
+                {
+                    try (Stream<UploadFileData> subscriptions = siteSampleSelector
+                            .getSubscriptions(batchSize))
+                    {
+                        List<Event> events = subscriptions.map(
+                                ufd -> {
+                                    Event nextEvent = new Event(
+                                            eventNameUploadFile, System
+                                                    .currentTimeMillis(), ufd
+                                                    .toDBObject());
+                                    return nextEvent;
+                                }).collect(Collectors.toList());
+                        nextEvents.addAll(events);
+                    }
+                }
 
-            	{
-	            	long scheduledTime = System.currentTimeMillis() + waitTimeBetweenBatches;
-	            	UploadFileBatchData newUploadFileBatchData = new UploadFileBatchData(count + 1);
-	            	Event nextEvent = new Event(event.getName(), scheduledTime, newUploadFileBatchData.toDBObject());
-	            	nextEvents.add(nextEvent);
-            	}
+                {
+                    long scheduledTime = System.currentTimeMillis()
+                            + waitTimeBetweenBatches;
+                    UploadFileBatchData newUploadFileBatchData = new UploadFileBatchData(
+                            count + 1);
+                    Event nextEvent = new Event(event.getName(), scheduledTime,
+                            newUploadFileBatchData.toDBObject());
+                    nextEvents.add(nextEvent);
+                }
 
-	            msg = "Prepared " + batchSize + " syncs";
+                msg = "Prepared " + batchSize + " syncs";
             }
 
             EventResult result = new EventResult(msg, nextEvents);

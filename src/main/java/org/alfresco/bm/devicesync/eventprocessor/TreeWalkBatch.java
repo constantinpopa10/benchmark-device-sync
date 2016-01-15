@@ -56,8 +56,7 @@ public class TreeWalkBatch extends AbstractEventProcessor
      */
     public TreeWalkBatch(SubscriptionsService subscriptionsService,
             SiteSampleSelector siteSampleSelector, int batchSize,
-            int numBatches, int waitTimeBetweenBatches,
-            String eventNameTreeWalk)
+            int numBatches, int waitTimeBetweenBatches, String eventNameTreeWalk)
     {
         this.subscriptionsService = subscriptionsService;
         this.siteSampleSelector = siteSampleSelector;
@@ -74,7 +73,8 @@ public class TreeWalkBatch extends AbstractEventProcessor
     protected EventResult processEvent(Event event) throws Exception
     {
         DBObject dbObject = (DBObject) event.getData();
-        TreeWalkBatchData treeWalkBatchData = TreeWalkBatchData.fromDBObject(dbObject);
+        TreeWalkBatchData treeWalkBatchData = TreeWalkBatchData
+                .fromDBObject(dbObject);
         int count = treeWalkBatchData.getCount();
         List<String> sites = treeWalkBatchData.getSites();
 
@@ -107,10 +107,11 @@ public class TreeWalkBatch extends AbstractEventProcessor
                             ufd -> {
                                 String username = ufd.getUsername();
                                 String siteId = ufd.getSiteId();
-                                TreeWalkData treeWalkData = new TreeWalkData(0, 0,
-                                        username, siteId);
+                                TreeWalkData treeWalkData = new TreeWalkData(0,
+                                        0, username, siteId);
                                 Event nextEvent = new Event(eventNameTreeWalk,
-                                        scheduledTime, treeWalkData.toDBObject());
+                                        scheduledTime, treeWalkData
+                                                .toDBObject());
                                 return nextEvent;
                             }).collect(Collectors.toList());
 

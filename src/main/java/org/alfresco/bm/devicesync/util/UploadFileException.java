@@ -14,20 +14,20 @@ public class UploadFileException extends RuntimeException
     private Exception e;
     private DBObject data;
 
-	public UploadFileException(Exception e, DBObject data)
+    public UploadFileException(Exception e, DBObject data)
     {
-	    super();
-	    this.e = e;
-	    this.data = data;
+        super();
+        this.e = e;
+        this.data = data;
     }
 
-	public Exception getE()
-	{
-		return e;
-	}
+    public Exception getE()
+    {
+        return e;
+    }
 
-	public DBObject getData()
-	{
-		return data;
-	}
+    public DBObject getData()
+    {
+        return data;
+    }
 }

@@ -13,6 +13,9 @@ import com.mongodb.DBObject;
  */
 public interface ExtendedResultsService
 {
-	Set<String> distinctSitesForEvent(String eventName, String key);
-	Stream<List<DBObject>> syncs();
+    Set<String> distinctSitesForEvent(String eventName, String key);
+
+    Stream<List<DBObject>> syncs(int skip, int limit);
+
+    double avgSyncTime(int skip, int limit);
 }

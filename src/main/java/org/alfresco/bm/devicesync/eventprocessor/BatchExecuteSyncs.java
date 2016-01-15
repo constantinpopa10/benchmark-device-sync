@@ -21,12 +21,11 @@ import org.apache.commons.logging.LogFactory;
 import org.bson.types.ObjectId;
 import org.springframework.social.alfresco.api.Alfresco;
 
-
-
 /**
  * Execution of desktop sync client.
  * 
- * Randomly does sync operations as local file changes, stop or start desktop sync.
+ * Randomly does sync operations as local file changes, stop or start desktop
+ * sync.
  * 
  * @author sglover
  * @since 1.0
@@ -49,20 +48,22 @@ public class BatchExecuteSyncs extends AbstractEventProcessor
      * @param fileService_p
      *            (TestFileService) delivers test files to insert locally
      * @param maxFolderDepth_p
-     *            (int >= 0) Maximum folder depth to handle during create/move/delete of files
+     *            (int >= 0) Maximum folder depth to handle during
+     *            create/move/delete of files
      * @param maxNumberOfFileOperations_p
      *            (int > 0) Maximum number of file operations per event
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public BatchExecuteSyncs(SessionService sessionService, SyncsService syncsService, PublicApiFactory publicApiFactory,
-    		int batchSize, int waitTimeMillisBetweenEvents)
+    public BatchExecuteSyncs(SessionService sessionService,
+            SyncsService syncsService, PublicApiFactory publicApiFactory,
+            int batchSize, int waitTimeMillisBetweenEvents)
     {
-    	this.sessionService = sessionService;
-    	this.syncsService = syncsService;
-    	this.publicApiFactory = publicApiFactory;
-    	this.batchSize = batchSize;
-    	this.waitTimeMillisBetweenEvents = waitTimeMillisBetweenEvents;
+        this.sessionService = sessionService;
+        this.syncsService = syncsService;
+        this.publicApiFactory = publicApiFactory;
+        this.batchSize = batchSize;
+        this.waitTimeMillisBetweenEvents = waitTimeMillisBetweenEvents;
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'execute desktop sync'.");
@@ -71,8 +72,8 @@ public class BatchExecuteSyncs extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
@@ -80,66 +81,74 @@ public class BatchExecuteSyncs extends AbstractEventProcessor
     {
         try
         {
-        	String msg = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<Event>();
 
             this.sessionService.startSession(null);
 
-        	List<SyncData> syncs = syncsService.getSyncs(SyncState.NotScheduled, 0, batchSize);
-        	if(syncs.size() == 0)
-        	{
-	            msg = "No more syncs to execute";
-        	}
-        	else
-        	{
-	        	SyncResults res = syncs.stream().map(syncData -> {
-	        		ObjectId objectId = syncData.getObjectId();
-	        		String subscriberId = syncData.getSubscriberId();
-	        		String subscriptionId = syncData.getSubscriptionId();
-	        		String username = syncData.getUsername();
+            List<SyncData> syncs = syncsService.getSyncs(
+                    SyncState.NotScheduled, 0, batchSize);
+            if (syncs.size() == 0)
+            {
+                msg = "No more syncs to execute";
+            }
+            else
+            {
+                SyncResults res = syncs
+                        .stream()
+                        .map(syncData -> {
+                            ObjectId objectId = syncData.getObjectId();
+                            String subscriberId = syncData.getSubscriberId();
+                            String subscriptionId = syncData
+                                    .getSubscriptionId();
+                            String username = syncData.getUsername();
 
-	        	    Alfresco alfresco = getAlfresco(username);
+                            Alfresco alfresco = getAlfresco(username);
 
-	        		syncsService.updateSync(objectId, SyncState.Scheduled, null);
+                            syncsService.updateSync(objectId,
+                                    SyncState.Scheduled, null);
 
-	        	    SyncStateData syncStateData = new SyncStateData(alfresco, objectId, username,
-	        	    		subscriberId, subscriptionId);
-	        	    return syncStateData.startSync(syncsService);
-	        	})
-	        	.map(syncStateData -> {
-	        		return syncStateData.getSync(syncsService);
-	        	})
-	        	.map(syncStateData -> {
-	        		return syncStateData.endSync(syncsService);
-	        	})
-	        	.reduce(new SyncResults(0),
-	        			new BiFunction<SyncResults, SyncStateData, SyncResults>()
-						{
-							@Override
-                            public SyncResults apply(SyncResults t, SyncStateData u)
-                            {
-	                            t.apply(u);
-	                            return t;
-                            }
-						},
-						new BinaryOperator<SyncResults>()
-						{
-							@Override
-                            public SyncResults apply(SyncResults t, SyncResults u)
-                            {
-	                            return t.combine(u);
-                            }
-						});
-	
-	        	logger.debug("res = " + res);
+                            SyncStateData syncStateData = new SyncStateData(
+                                    alfresco, objectId, username, subscriberId,
+                                    subscriptionId);
+                            return syncStateData.startSync(syncsService);
+                        })
+                        .map(syncStateData -> {
+                            return syncStateData.getSync(syncsService);
+                        })
+                        .map(syncStateData -> {
+                            return syncStateData.endSync(syncsService);
+                        })
+                        .reduce(new SyncResults(0),
+                                new BiFunction<SyncResults, SyncStateData, SyncResults>()
+                                {
+                                    @Override
+                                    public SyncResults apply(SyncResults t,
+                                            SyncStateData u)
+                                    {
+                                        t.apply(u);
+                                        return t;
+                                    }
+                                }, new BinaryOperator<SyncResults>()
+                                {
+                                    @Override
+                                    public SyncResults apply(SyncResults t,
+                                            SyncResults u)
+                                    {
+                                        return t.combine(u);
+                                    }
+                                });
 
-	            // create same event again - delay to next event
-	            Event nextEvent = new Event(event_p.getName(), System.currentTimeMillis()
-	                    + this.waitTimeMillisBetweenEvents, null);
-	        	nextEvents.add(nextEvent);
+                logger.debug("res = " + res);
 
-	            msg = "Executed " + syncs.size() + " syncs";
-        	}
+                // create same event again - delay to next event
+                Event nextEvent = new Event(event_p.getName(),
+                        System.currentTimeMillis()
+                                + this.waitTimeMillisBetweenEvents, null);
+                nextEvents.add(nextEvent);
+
+                msg = "Executed " + syncs.size() + " syncs";
+            }
 
             if (logger.isDebugEnabled())
             {

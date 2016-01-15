@@ -36,19 +36,25 @@ public class CreateSubscriber extends AbstractEventProcessor
     private final PublicApiFactory publicApiFactory;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public CreateSubscriber(UserDataService userDataService, SubscribersService subscribersService,
-    		PublicApiFactory publicApiFactory)
+    public CreateSubscriber(UserDataService userDataService,
+            SubscribersService subscribersService,
+            PublicApiFactory publicApiFactory)
     {
-    	this.userDataService = userDataService;
-    	this.subscribersService = subscribersService;
+        this.userDataService = userDataService;
+        this.subscribersService = subscribersService;
         this.publicApiFactory = publicApiFactory;
 
         // validate arguments
@@ -58,45 +64,46 @@ public class CreateSubscriber extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	super.suspendTimer();
+        super.suspendTimer();
 
         try
         {
-        	DBObject dbObject = (DBObject)event.getData();
-        	String username = null;
+            DBObject dbObject = (DBObject) event.getData();
+            String username = null;
 
-        	if(dbObject != null)
-        	{
-            	SubscriberData subscriberData = SubscriberData
-            			.fromDBObject(dbObject);
-            	username = subscriberData.getUsername();
-        	}
-        	else
-        	{
-        		UserData userData = userDataService.getRandomUser();
-        		username = userData.getUsername();
-        	}
+            if (dbObject != null)
+            {
+                SubscriberData subscriberData = SubscriberData
+                        .fromDBObject(dbObject);
+                username = subscriberData.getUsername();
+            }
+            else
+            {
+                UserData userData = userDataService.getRandomUser();
+                username = userData.getUsername();
+            }
 
-    		Alfresco alfresco = getAlfresco(username);
+            Alfresco alfresco = getAlfresco(username);
 
-        	super.resumeTimer();
-    		Subscriber subscriber = alfresco.createSubscriber("-default-", "test");
-        	super.suspendTimer();
+            super.resumeTimer();
+            Subscriber subscriber = alfresco.createSubscriber("-default-",
+                    "test");
+            super.suspendTimer();
 
-        	String subscriberId = subscriber.getId();
-    		String syncServiceURI = subscriber.getSyncService().getUri();
-        	subscribersService.addSubscriber(username, subscriberId, syncServiceURI,
-        			DataCreationState.Created);
+            String subscriberId = subscriber.getId();
+            String syncServiceURI = subscriber.getSyncService().getUri();
+            subscribersService.addSubscriber(username, subscriberId,
+                    syncServiceURI, DataCreationState.Created);
 
             List<Event> nextEvents = new LinkedList<>();
-        	String msg = "Created subscriber " + subscriber;
+            String msg = "Created subscriber " + subscriber;
 
             EventResult result = new EventResult(msg, nextEvents);
 

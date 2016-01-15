@@ -35,19 +35,25 @@ public class BatchProcessor extends AbstractEventProcessor
     private final String eventNameTreeWalkBatch;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public BatchProcessor(String eventNameSubscribersBatch, String eventNameSubscriptionsBatch,
-    		String eventNameSyncBatch, String eventNameCollectStatsBatch, String eventNameUploadFileBatch,
-    		String eventNameUploadAndSyncBatch, String eventNameTreeWalkBatch)
+    public BatchProcessor(String eventNameSubscribersBatch,
+            String eventNameSubscriptionsBatch, String eventNameSyncBatch,
+            String eventNameCollectStatsBatch, String eventNameUploadFileBatch,
+            String eventNameUploadAndSyncBatch, String eventNameTreeWalkBatch)
     {
-    	this.eventNameSubscribersBatch = eventNameSubscribersBatch;
+        this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.eventNameSubscriptionsBatch = eventNameSubscriptionsBatch;
         this.eventNameSyncBatch = eventNameSyncBatch;
         this.eventNameCollectStatsBatch = eventNameCollectStatsBatch;
@@ -56,12 +62,17 @@ public class BatchProcessor extends AbstractEventProcessor
         this.eventNameTreeWalkBatch = eventNameTreeWalkBatch;
 
         // validate arguments
-        Util.checkArgumentNotNull(eventNameSubscribersBatch, "eventNameSubscribersBatch");
-        Util.checkArgumentNotNull(eventNameSubscriptionsBatch, "eventNameSubscriptionsBatch");
+        Util.checkArgumentNotNull(eventNameSubscribersBatch,
+                "eventNameSubscribersBatch");
+        Util.checkArgumentNotNull(eventNameSubscriptionsBatch,
+                "eventNameSubscriptionsBatch");
         Util.checkArgumentNotNull(eventNameSyncBatch, "eventNameSyncBatch");
-        Util.checkArgumentNotNull(eventNameUploadAndSyncBatch, "eventNameUploadAndSyncBatch");
-        Util.checkArgumentNotNull(eventNameCollectStatsBatch, "eventNameCollectStatsBatch");
-        Util.checkArgumentNotNull(eventNameTreeWalkBatch, "eventNameTreeWalkBatch");
+        Util.checkArgumentNotNull(eventNameUploadAndSyncBatch,
+                "eventNameUploadAndSyncBatch");
+        Util.checkArgumentNotNull(eventNameCollectStatsBatch,
+                "eventNameCollectStatsBatch");
+        Util.checkArgumentNotNull(eventNameTreeWalkBatch,
+                "eventNameTreeWalkBatch");
     }
 
     @Override
@@ -74,44 +85,51 @@ public class BatchProcessor extends AbstractEventProcessor
             long time = System.currentTimeMillis();
 
             {
-	            SubscriberBatchData data = new SubscriberBatchData(0);
-	            Event nextEvent = new Event(eventNameSubscribersBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                SubscriberBatchData data = new SubscriberBatchData(0);
+                Event nextEvent = new Event(eventNameSubscribersBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
-	            SubscriptionBatchData data = new SubscriptionBatchData(0);
-	            Event nextEvent = new Event(eventNameSubscriptionsBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                SubscriptionBatchData data = new SubscriptionBatchData(0);
+                Event nextEvent = new Event(eventNameSubscriptionsBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
-	            SyncBatchData data = new SyncBatchData(0);
-	            Event nextEvent = new Event(eventNameSyncBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                SyncBatchData data = new SyncBatchData(0);
+                Event nextEvent = new Event(eventNameSyncBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
-	            SyncBatchData data = new SyncBatchData(0);
-	            Event nextEvent = new Event(eventNameUploadAndSyncBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                SyncBatchData data = new SyncBatchData(0);
+                Event nextEvent = new Event(eventNameUploadAndSyncBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
-	            UploadFileBatchData data = new UploadFileBatchData(0);
-	            Event nextEvent = new Event(eventNameUploadFileBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                UploadFileBatchData data = new UploadFileBatchData(0);
+                Event nextEvent = new Event(eventNameUploadFileBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
-	            CollectStatsBatchData data = new CollectStatsBatchData(0);
-	            Event nextEvent = new Event(eventNameCollectStatsBatch, time, data.toDBObject());
-	            nextEvents.add(nextEvent);
+                CollectStatsBatchData data = new CollectStatsBatchData(0);
+                Event nextEvent = new Event(eventNameCollectStatsBatch, time,
+                        data.toDBObject());
+                nextEvents.add(nextEvent);
             }
 
             {
                 TreeWalkBatchData data = new TreeWalkBatchData(0);
-                Event nextEvent = new Event(eventNameTreeWalkBatch, time, data.toDBObject());
+                Event nextEvent = new Event(eventNameTreeWalkBatch, time,
+                        data.toDBObject());
                 nextEvents.add(nextEvent);
             }
 

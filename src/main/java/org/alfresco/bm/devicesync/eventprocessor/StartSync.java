@@ -10,21 +10,20 @@ import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.session.SessionService;
-import org.alfresco.service.synchronization.api.StartSyncRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.social.alfresco.api.Alfresco;
+import org.springframework.social.alfresco.api.entities.StartSyncRequest;
 import org.springframework.social.alfresco.api.entities.StartSyncResponse;
 
 import com.mongodb.DBObject;
 
-
-
 /**
  * Execution of desktop sync client.
  * 
- * Randomly does sync operations as local file changes, stop or start desktop sync.
+ * Randomly does sync operations as local file changes, stop or start desktop
+ * sync.
  * 
  * @author sglover
  * @since 1.0
@@ -38,7 +37,7 @@ public class StartSync extends AbstractEventProcessor
     private final PublicApiFactory publicApiFactory;
     private final int timeBetweenSyncOps;
 
-	private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Constructor
@@ -46,17 +45,19 @@ public class StartSync extends AbstractEventProcessor
      * @param fileService_p
      *            (TestFileService) delivers test files to insert locally
      * @param maxFolderDepth_p
-     *            (int >= 0) Maximum folder depth to handle during create/move/delete of files
+     *            (int >= 0) Maximum folder depth to handle during
+     *            create/move/delete of files
      * @param maxNumberOfFileOperations_p
      *            (int > 0) Maximum number of file operations per event
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public StartSync(SessionService sessionService, PublicApiFactory publicApiFactory, int timeBetweenSyncOps)
+    public StartSync(SessionService sessionService,
+            PublicApiFactory publicApiFactory, int timeBetweenSyncOps)
     {
-    	this.sessionService = sessionService;
-    	this.publicApiFactory = publicApiFactory;
-    	this.timeBetweenSyncOps = timeBetweenSyncOps;
+        this.sessionService = sessionService;
+        this.publicApiFactory = publicApiFactory;
+        this.timeBetweenSyncOps = timeBetweenSyncOps;
         if (logger.isDebugEnabled())
         {
             logger.debug("Created event processor 'start sync'.");
@@ -65,53 +66,62 @@ public class StartSync extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	super.suspendTimer();
+        super.suspendTimer();
 
-    	DBObject dbObject = (DBObject)event.getData();
-    	SyncData syncData = SyncData.fromDBObject(dbObject);
+        DBObject dbObject = (DBObject) event.getData();
+        SyncData syncData = SyncData.fromDBObject(dbObject);
 
         try
         {
             List<Event> nextEvents = new LinkedList<Event>();
 
-        	Long endTime = syncData.getEndTime();
-        	if(endTime == null || System.currentTimeMillis() <= endTime)
-        	{
-	            this.sessionService.startSession(null);
+            Long endTime = syncData.getEndTime();
+            if (endTime == null || System.currentTimeMillis() <= endTime)
+            {
+                this.sessionService.startSession(null);
 
-	            String username = syncData.getUsername();
-	    		String subscriberId = syncData.getSubscriberId();
-	    		String subscriptionId = syncData.getSubscriptionId();
-	    	    Alfresco alfresco = getAlfresco(username);
+                String username = syncData.getUsername();
+                String subscriberId = syncData.getSubscriberId();
+                String subscriptionId = syncData.getSubscriptionId();
+                Alfresco alfresco = getAlfresco(username);
 
-				StartSyncRequest req = new StartSyncRequest(Collections.emptyList());
-		    	super.resumeTimer();
-				String response = alfresco.startSyncRaw(req, "-default-", subscriberId, subscriptionId);
-		    	super.suspendTimer();
+                StartSyncRequest req = new StartSyncRequest(
+                        Collections.emptyList());
+                super.resumeTimer();
+                String response = alfresco.startSyncRaw(req, "-default-",
+                        subscriberId, subscriptionId);
+                super.suspendTimer();
 
-		        StartSyncResponse syncResponse = mapper.readValue(response, StartSyncResponse.class);
-				long syncId = Long.valueOf(syncResponse.getSyncId());
+                StartSyncResponse syncResponse = mapper.readValue(response,
+                        StartSyncResponse.class);
+                long syncId = Long.valueOf(syncResponse.getSyncId());
 
-				logger.debug("response = " + response);
+                logger.debug("response = " + response);
 
-				long scheduledTime = System.currentTimeMillis() + timeBetweenSyncOps;
-				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), syncId, 0, 0, 0, false, endTime, "Started sync " + syncId, false);
-	            Event nextEvent = new Event("getSync", scheduledTime, syncData.toDBObject());
-	        	nextEvents.add(nextEvent);
-        	}
-        	else
-        	{
-				syncData = new SyncData(null, syncData.getSiteId(), syncData.getUsername(), syncData.getSubscriberId(),
-						syncData.getSubscriptionId(), null, 0, 0, 0, false, endTime, "Start sync end time reached", false);
-        	}
+                long scheduledTime = System.currentTimeMillis()
+                        + timeBetweenSyncOps;
+                syncData = new SyncData(null, syncData.getSiteId(),
+                        syncData.getUsername(), syncData.getSubscriberId(),
+                        syncData.getSubscriptionId(), syncId, 0, 0, 0, false,
+                        endTime, "Started sync " + syncId, false);
+                Event nextEvent = new Event("getSync", scheduledTime,
+                        syncData.toDBObject());
+                nextEvents.add(nextEvent);
+            }
+            else
+            {
+                syncData = new SyncData(null, syncData.getSiteId(),
+                        syncData.getUsername(), syncData.getSubscriberId(),
+                        syncData.getSubscriptionId(), null, 0, 0, 0, false,
+                        endTime, "Start sync end time reached", false);
+            }
 
             return new EventResult(syncData.toDBObject(), nextEvents);
         }

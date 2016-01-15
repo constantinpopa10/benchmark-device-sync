@@ -174,7 +174,7 @@ public class SyncData implements Serializable
     {
         this.msg = "Get sync " + syncId + ", " + message;
         this.changes = changes;
-        this.numSyncChanges = changes.size();
+        this.numSyncChanges = changes == null ? 0 : changes.size();
         this.gotResults = true;
         this.finalNumRetries = numRetries;
     }

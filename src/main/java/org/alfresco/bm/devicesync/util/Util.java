@@ -17,13 +17,15 @@ public class Util
      * 
      * @throws IllegalArgumentException
      */
-    public static void checkArgumentNotNull(Object argument_p, String argumentName_p) throws IllegalArgumentException
+    public static void checkArgumentNotNull(Object argument_p,
+            String argumentName_p) throws IllegalArgumentException
     {
         checkStringNotNullOrEmpty(argumentName_p, "argumentName_p");
 
         if (null == argument_p)
         {
-            throw new IllegalArgumentException("Argument '" + argumentName_p + "' is mandataory.");
+            throw new IllegalArgumentException("Argument '" + argumentName_p
+                    + "' is mandataory.");
         }
     }
 
@@ -37,12 +39,13 @@ public class Util
      * 
      * @throws IllegalArgumentException
      */
-    public static void checkStringNotNullOrEmpty(String argument_p, String argumentName_p)
-            throws IllegalArgumentException
+    public static void checkStringNotNullOrEmpty(String argument_p,
+            String argumentName_p) throws IllegalArgumentException
     {
         if (null == argument_p || argument_p.isEmpty())
         {
-            throw new IllegalArgumentException("Argument '" + argumentName_p + "' is mandataory.");
+            throw new IllegalArgumentException("Argument '" + argumentName_p
+                    + "' is mandataory.");
         }
     }
 }

@@ -61,6 +61,12 @@
          <constructor-arg name="activeMQPort" value="${activemq.port}" />
     </bean>
 
+    <bean id="cmisSessionFactory" class="org.alfresco.bm.devicesync.util.CMISSessionFactory">
+        <constructor-arg name="userDataService" ref="userDataService" />
+        <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
+        <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
+    </bean>
+
     <!--            -->
     <!-- DAO        -->
     <!--            -->
@@ -122,9 +128,6 @@
         <constructor-arg>
             <array>
                 <ref bean="eventController" />
-                <!-- 
-                <ref bean="clientRegistry" />
-                 -->
             </array>
         </constructor-arg>
     </bean>
@@ -137,29 +140,6 @@
         <constructor-arg name="adminUserName" value="${alfresco.admin.user}" />
         <constructor-arg name="adminPassword" value="${alfresco.admin.pwd}" />
     </bean>
-
-    <!--                                -->
-    <!-- Client Create Data Defaults    -->
-    <!--                                -->
-    <!--                                -->
-    <!-- 
-    <bean id="clientCreateData" class="org.alfresco.bm.desktopsync.client.DesktopSyncCreateData">
-        <constructor-arg name="repoUrl_p" value="${alfresco.url}" />
-        <constructor-arg name="repoUser_p" value="${alfresco.admin.user}" />
-        <constructor-arg name="repoUserPwd_p" value="${alfresco.admin.pwd}" />
-        <constructor-arg name="labelCompanyHome_p" value="${alfresco.labelCompanyHome}" />
-        <constructor-arg name="labelDocumentLibrary" value="${alfresco.labelDocumentLibrary}" />
-        <constructor-arg name="labelSites_p" value="${alfresco.labelSites}" />
-        <constructor-arg name="remoteFolderLocation_p" value="${alfresco.remoteBaseFolderLocation}" />
-        <constructor-arg name="localFolderLocation_p" value="${desktopsync.localBaseFolderLocation}" />
-        <constructor-arg name="proxyType_p" value="${proxy.type}" />
-        <constructor-arg name="proxyHost_p" value="${proxy.host}" />
-        <constructor-arg name="proxyPort_p" value="${proxy.port}" />
-        <constructor-arg name="proxyUser_p" value="${proxy.user}" />
-        <constructor-arg name="proxyUserPwd_p" value="${proxy.user.pwd}" />
-        <constructor-arg name="pollPeriodMillis_p" value="${alfresco.pollIntervallMilliseconds}" />
-    </bean>
- -->
 
     <bean id="testFileService" class="org.alfresco.bm.file.FtpTestFileService">
         <constructor-arg name="fileDataService" ref="fileDataService" />
@@ -418,9 +398,15 @@
     </bean>
 
     <bean id="event.treeWalk" class="org.alfresco.bm.devicesync.eventprocessor.TreeWalk" parent="event.base">
-        <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="alfrescoHost" value="${alfresco.server}" />
-        <constructor-arg name="alfrescoPort" value="${alfresco.port}" />
+        <constructor-arg name="cmisSessionFactory" ref="cmisSessionFactory" />
+        <constructor-arg name="splitIntoEvents" value="${treeWalkBatch.splitIntoEvents}" />
     </bean>
 
+    <bean id="event.treeWalkGetDocument" class="org.alfresco.bm.devicesync.eventprocessor.TreeWalkGetDocument" parent="event.base">
+        <constructor-arg name="cmisSessionFactory" ref="cmisSessionFactory" />
+    </bean>
+
+    <bean id="event.treeWalkGetChildren" class="org.alfresco.bm.devicesync.eventprocessor.TreeWalkGetChildren" parent="event.base">
+        <constructor-arg name="cmisSessionFactory" ref="cmisSessionFactory" />
+    </bean>
 </beans>

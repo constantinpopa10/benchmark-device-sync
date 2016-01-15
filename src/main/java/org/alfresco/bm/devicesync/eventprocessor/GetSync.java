@@ -25,7 +25,8 @@ import com.mongodb.DBObject;
 /**
  * Execution of desktop sync client.
  * 
- * Randomly does sync operations as local file changes, stop or start desktop sync.
+ * Randomly does sync operations as local file changes, stop or start desktop
+ * sync.
  * 
  * @author sglover
  * @since 1.0
@@ -44,7 +45,7 @@ public class GetSync extends AbstractEventProcessor
     private final String eventNameEndSync;
     private final String eventNameGetFile;
 
-	private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Constructor
@@ -52,23 +53,26 @@ public class GetSync extends AbstractEventProcessor
      * @param fileService_p
      *            (TestFileService) delivers test files to insert locally
      * @param maxFolderDepth_p
-     *            (int >= 0) Maximum folder depth to handle during create/move/delete of files
+     *            (int >= 0) Maximum folder depth to handle during
+     *            create/move/delete of files
      * @param maxNumberOfFileOperations_p
      *            (int > 0) Maximum number of file operations per event
      * @param waitTimeMillisBetweenEvents_p
      *            (int > 0) Wait time between events
      */
-    public GetSync(PublicApiFactory publicApiFactory, int timeBetweenSyncOps, int maxTries, int timeBetweenGetFiles,
-    		int timeBetweenGetSyncs, boolean getFilesEnabled, String eventNameEndSync, String eventNameGetFile)
+    public GetSync(PublicApiFactory publicApiFactory, int timeBetweenSyncOps,
+            int maxTries, int timeBetweenGetFiles, int timeBetweenGetSyncs,
+            boolean getFilesEnabled, String eventNameEndSync,
+            String eventNameGetFile)
     {
-    	this.publicApiFactory = publicApiFactory;
-    	this.timeBetweenSyncOps = timeBetweenSyncOps;
-    	this.maxTries = maxTries;
-    	this.timeBetweenGetFiles = timeBetweenGetFiles;
-    	this.timeBetweenGetSyncs = timeBetweenGetSyncs;
-    	this.getFilesEnabled = getFilesEnabled;
-    	this.eventNameEndSync = eventNameEndSync;
-    	this.eventNameGetFile = eventNameGetFile;
+        this.publicApiFactory = publicApiFactory;
+        this.timeBetweenSyncOps = timeBetweenSyncOps;
+        this.maxTries = maxTries;
+        this.timeBetweenGetFiles = timeBetweenGetFiles;
+        this.timeBetweenGetSyncs = timeBetweenGetSyncs;
+        this.getFilesEnabled = getFilesEnabled;
+        this.eventNameEndSync = eventNameEndSync;
+        this.eventNameGetFile = eventNameGetFile;
 
         if (logger.isDebugEnabled())
         {
@@ -78,8 +82,8 @@ public class GetSync extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     private boolean getSync(String getSyncEventName, Alfresco alfresco,
@@ -118,7 +122,8 @@ public class GetSync extends AbstractEventProcessor
                 Event event = new Event(getSyncEventName, nextGetSyncTime,
                         syncData.toDBObject());
                 nextEvents.add(event);
-            } else
+            }
+            else
             {
                 // regard this as a fail
                 success = false;
@@ -179,19 +184,20 @@ public class GetSync extends AbstractEventProcessor
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	super.suspendTimer();
+        super.suspendTimer();
 
-    	DBObject dbObject = (DBObject)event.getData();
-    	SyncData syncData = SyncData.fromDBObject(dbObject);
+        DBObject dbObject = (DBObject) event.getData();
+        SyncData syncData = SyncData.fromDBObject(dbObject);
 
         try
         {
             String username = syncData.getUsername();
-    	    Alfresco alfresco = getAlfresco(username);
+            Alfresco alfresco = getAlfresco(username);
 
             List<Event> nextEvents = new LinkedList<Event>();
 
-			boolean success = getSync(event.getName(), alfresco, syncData, nextEvents);
+            boolean success = getSync(event.getName(), alfresco, syncData,
+                    nextEvents);
 
             return new EventResult(syncData.toDBObject(), nextEvents, success);
         }

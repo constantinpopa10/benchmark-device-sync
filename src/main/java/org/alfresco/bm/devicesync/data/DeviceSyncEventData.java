@@ -9,16 +9,15 @@ public class DeviceSyncEventData
 {
     private final String sessionId;
 
-	public DeviceSyncEventData(String sessionId)
+    public DeviceSyncEventData(String sessionId)
     {
-	    super();
-	    this.sessionId = sessionId;
+        super();
+        this.sessionId = sessionId;
     }
 
-	public String getSessionId()
-	{
-		return sessionId;
-	}
-    
-    
+    public String getSessionId()
+    {
+        return sessionId;
+    }
+
 }

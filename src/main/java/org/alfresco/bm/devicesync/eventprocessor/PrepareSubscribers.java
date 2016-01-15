@@ -30,25 +30,32 @@ public class PrepareSubscribers extends AbstractEventProcessor
     private final String eventNameSubscribersBatch;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
     public PrepareSubscribers(SubscribersService subscribersService,
-    		String eventNameSubscribersBatch, String nextEventName, int maxSubscribers)
+            String eventNameSubscribersBatch, String nextEventName,
+            int maxSubscribers)
     {
-    	this.subscribersService = subscribersService;
+        this.subscribersService = subscribersService;
         this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.nextEventName = nextEventName;
         this.maxSubscribers = maxSubscribers;
 
         // validate arguments
         Util.checkArgumentNotNull(subscribersService, "subscribersService");
-        Util.checkArgumentNotNull(eventNameSubscribersBatch, "eventNameSubscribersBatch");
+        Util.checkArgumentNotNull(eventNameSubscribersBatch,
+                "eventNameSubscribersBatch");
         Util.checkArgumentNotNull(nextEventName, "nextEventName");
     }
 
@@ -57,25 +64,26 @@ public class PrepareSubscribers extends AbstractEventProcessor
     {
         try
         {
-        	String msg = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<>();
 
             long numSubscribers = subscribersService.countSubscribers(null);
-            if(maxSubscribers <= numSubscribers)
+            if (maxSubscribers <= numSubscribers)
             {
                 msg = "Prepared subscribers, will now prepare subscriptions.";
-            	Event newEvent = new Event(nextEventName, null);
-            	nextEvents.add(newEvent);
+                Event newEvent = new Event(nextEventName, null);
+                nextEvents.add(newEvent);
             }
             else
             {
-            	long count = maxSubscribers - numSubscribers;
-            	int batchSize = 20;
-            	int numBatches = (int)count/batchSize; // TODO
-            	SubscriberBatchData subscriberBatchData = new SubscriberBatchData(0, batchSize, numBatches, null,
-            			nextEventName);
-            	Event newEvent = new Event(eventNameSubscribersBatch, subscriberBatchData.toDBObject());
-            	nextEvents.add(newEvent);
+                long count = maxSubscribers - numSubscribers;
+                int batchSize = 20;
+                int numBatches = (int) count / batchSize; // TODO
+                SubscriberBatchData subscriberBatchData = new SubscriberBatchData(
+                        0, batchSize, numBatches, null, nextEventName);
+                Event newEvent = new Event(eventNameSubscribersBatch,
+                        subscriberBatchData.toDBObject());
+                nextEvents.add(newEvent);
 
                 msg = "Prepared " + count + " subscribers.";
             }

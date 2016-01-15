@@ -36,10 +36,11 @@ public class CollectStats extends AbstractEventProcessor
     private final ActiveMQMonitor activeMQMonitor;
 
     /**
-     * Constructor 
+     * Constructor
      * 
      */
-    public CollectStats(PublicApiFactory publicApiFactory, MetricsService metricsService, ActiveMQMonitor activeMQMonitor)
+    public CollectStats(PublicApiFactory publicApiFactory,
+            MetricsService metricsService, ActiveMQMonitor activeMQMonitor)
     {
         this.publicApiFactory = publicApiFactory;
         this.metricsService = metricsService;
@@ -53,76 +54,75 @@ public class CollectStats extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getAdminPublicApi();
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getAdminPublicApi();
+        return alfresco;
     }
 
     private DBObject toDBObject(DestinationStats stats)
     {
-    	BasicDBObjectBuilder builder = BasicDBObjectBuilder
-    		.start("destType", stats.getDestinationType())
-    		.add("destName", stats.getDestinationName())
-    		.add("avgEnqueueTime", stats.getAverageEnqueueTime())
-    		.add("enqueueCount", stats.getEnqueueCount())
-    		.add("dequeueCount", stats.getDequeueCount())
-    		.add("queueSize", stats.getQueueSize())
-    		.add("avgBlockedTime", stats.getAverageBlockedTime())
-    		.add("maxEnqueueTime", stats.getMaxEnqueueTime())
-    		.add("blockedSends", stats.getBlockedSends())
-    		.add("dispatchCount", stats.getDispatchCount())
-    		.add("memoryPercentUsage", stats.getMemoryPercentUsage());
-    	return builder.get();
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder
+                .start("destType", stats.getDestinationType())
+                .add("destName", stats.getDestinationName())
+                .add("avgEnqueueTime", stats.getAverageEnqueueTime())
+                .add("enqueueCount", stats.getEnqueueCount())
+                .add("dequeueCount", stats.getDequeueCount())
+                .add("queueSize", stats.getQueueSize())
+                .add("avgBlockedTime", stats.getAverageBlockedTime())
+                .add("maxEnqueueTime", stats.getMaxEnqueueTime())
+                .add("blockedSends", stats.getBlockedSends())
+                .add("dispatchCount", stats.getDispatchCount())
+                .add("memoryPercentUsage", stats.getMemoryPercentUsage());
+        return builder.get();
     }
 
     private DBObject toDBObject(BrokerStats stats)
     {
-    	BasicDBObjectBuilder builder = BasicDBObjectBuilder
-    			.start("memPercentUsage", stats.getMemoryPercentUsage())
-    			.add("storePercentUsage", stats.getStorePercentUsage())
-    			.add("tempPercentUsage", stats.getTempPercentUsage());
-    	return builder.get();
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder
+                .start("memPercentUsage", stats.getMemoryPercentUsage())
+                .add("storePercentUsage", stats.getStorePercentUsage())
+                .add("tempPercentUsage", stats.getTempPercentUsage());
+        return builder.get();
     }
 
     private DBObject toDBObject(ActiveMQStats stats)
     {
-    	BasicDBObjectBuilder destStatsBuilder = BasicDBObjectBuilder.start();
-    	BrokerStats brokerStats = stats.getBrokerStats();
-    	for(DestinationStats destStats : stats.getDestinationStats())
-    	{
-    		DBObject destStatsDBObject = toDBObject(destStats);
-    		String destinationName = destStats.getDestinationName().replaceAll("\\.", "-");
-    		destStatsBuilder.add(destinationName, destStatsDBObject);
-    	}
-    	DBObject brokerStatsDBObject = toDBObject(brokerStats);
-    	BasicDBObjectBuilder builder = BasicDBObjectBuilder
-    			.start("brokerStats", brokerStatsDBObject)
-    			.add("destinationStats", destStatsBuilder.get());
-    	return builder.get();
+        BasicDBObjectBuilder destStatsBuilder = BasicDBObjectBuilder.start();
+        BrokerStats brokerStats = stats.getBrokerStats();
+        for (DestinationStats destStats : stats.getDestinationStats())
+        {
+            DBObject destStatsDBObject = toDBObject(destStats);
+            String destinationName = destStats.getDestinationName().replaceAll(
+                    "\\.", "-");
+            destStatsBuilder.add(destinationName, destStatsDBObject);
+        }
+        DBObject brokerStatsDBObject = toDBObject(brokerStats);
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start(
+                "brokerStats", brokerStatsDBObject).add("destinationStats",
+                destStatsBuilder.get());
+        return builder.get();
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-		super.suspendTimer();
+        super.suspendTimer();
 
         try
         {
-    		Alfresco alfresco = getAlfresco("admin");
+            Alfresco alfresco = getAlfresco("admin");
 
-    		super.resumeTimer();
-    		String syncMetrics = alfresco.syncMetrics("-default-");
-    		String subsMetrics = alfresco.subsMetrics("-default-");
-    		ActiveMQStats activeMQStats = activeMQMonitor.getStats();
-    		super.suspendTimer();
+            super.resumeTimer();
+            String metrics = alfresco.metrics("-default-");
+            ActiveMQStats activeMQStats = activeMQMonitor.getStats();
+            super.suspendTimer();
 
-    		DBObject activeMQStatsDBObject = toDBObject(activeMQStats);
-    		DBObject syncDBObject = (DBObject)JSON.parse(syncMetrics);
-    		DBObject subsDBObject = (DBObject)JSON.parse(subsMetrics);
+            DBObject activeMQStatsDBObject = toDBObject(activeMQStats);
+            DBObject metricsDBObject = (DBObject) JSON.parse(metrics);
 
-    		metricsService.addMetrics(syncDBObject, subsDBObject, activeMQStatsDBObject);
+            metricsService.addMetrics(metricsDBObject, activeMQStatsDBObject);
 
             List<Event> nextEvents = new LinkedList<>();
-        	String msg = "Got metrics";
+            String msg = "Got metrics";
 
             EventResult result = new EventResult(msg, nextEvents);
 

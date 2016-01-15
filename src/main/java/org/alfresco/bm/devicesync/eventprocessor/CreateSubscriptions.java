@@ -17,7 +17,6 @@ import org.springframework.social.alfresco.api.Alfresco;
 import org.springframework.social.alfresco.api.entities.Subscription;
 import org.springframework.social.alfresco.api.entities.SubscriptionType;
 
-
 /**
  * 
  * @author sglover
@@ -34,38 +33,46 @@ public class CreateSubscriptions extends AbstractEventProcessor
     private final String eventNameCreateSubscriptions;
 
     private final int batchSize;
-    
+
     private final PublicApiFactory publicApiFactory;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public CreateSubscriptions(SubscriptionsService subscriptionsService, PublicApiFactory publicApiFactory,
-    		int batchSize, String eventNamePrepareSyncs, String eventNameCreateSubscriptions)
+    public CreateSubscriptions(SubscriptionsService subscriptionsService,
+            PublicApiFactory publicApiFactory, int batchSize,
+            String eventNamePrepareSyncs, String eventNameCreateSubscriptions)
     {
-    	this.subscriptionsService = subscriptionsService;
-    	this.publicApiFactory = publicApiFactory;
-    	this.batchSize = batchSize;
-    	this.eventNameCreateSubscriptions = eventNameCreateSubscriptions;
-    	this.eventNamePrepareSyncs = eventNamePrepareSyncs;
+        this.subscriptionsService = subscriptionsService;
+        this.publicApiFactory = publicApiFactory;
+        this.batchSize = batchSize;
+        this.eventNameCreateSubscriptions = eventNameCreateSubscriptions;
+        this.eventNamePrepareSyncs = eventNamePrepareSyncs;
 
         // validate arguments
-    	Util.checkArgumentNotNull(subscriptionsService, "subscriptionsService");
+        Util.checkArgumentNotNull(subscriptionsService, "subscriptionsService");
         Util.checkArgumentNotNull(publicApiFactory, "publicApiFactory");
-        Util.checkArgumentNotNull(eventNameCreateSubscriptions, "eventNameCreateSubscriptions");
-        Util.checkArgumentNotNull(eventNamePrepareSyncs, "eventNamePrepareSyncs");
+        Util.checkArgumentNotNull(eventNameCreateSubscriptions,
+                "eventNameCreateSubscriptions");
+        Util.checkArgumentNotNull(eventNamePrepareSyncs,
+                "eventNamePrepareSyncs");
     }
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
@@ -73,49 +80,69 @@ public class CreateSubscriptions extends AbstractEventProcessor
     {
         try
         {
-        	String msg  = null;
+            String msg = null;
             List<Event> nextEvents = new LinkedList<>();
 
-            long numSubscriptions = subscriptionsService.countSubscriptions(DataCreationState.Scheduled);
-            if(numSubscriptions == 0)
+            long numSubscriptions = subscriptionsService
+                    .countSubscriptions(DataCreationState.Scheduled);
+            if (numSubscriptions == 0)
             {
                 long time = System.currentTimeMillis() + 5000L;
                 Event doneEvent = new Event(eventNamePrepareSyncs, time, null);
                 nextEvents.add(doneEvent);
-                msg = "Created all subscriptions and raising '" + doneEvent.getName()
-                        + "' event.";
+                msg = "Created all subscriptions and raising '"
+                        + doneEvent.getName() + "' event.";
             }
             else
             {
-                List<SubscriptionData> subscriptions = subscriptionsService.getSubscriptions(
-                		DataCreationState.Scheduled, 0, batchSize);
-                subscriptions.stream().forEach(subscriptionData -> {
-                	try
-                	{
-                		SubscriptionType subscriptionType = SubscriptionType.valueOf(subscriptionData.getSubscriptionType());
-                		String username = subscriptionData.getUsername();
-                		Alfresco alfresco = getAlfresco(username);
-                		Subscription subscription = alfresco.createSubscription("-default-", subscriptionData.getSubscriberId(),
-                				subscriptionType, subscriptionData.getPath());
-                    	subscriptionsService.updateSubscription(subscriptionData.getObjectId(),
-                    			subscription.getId(), DataCreationState.Created);
-                	}
-                	catch(Exception e)
-                	{
-                		subscriptionsService.updateSubscription(subscriptionData.getObjectId(), DataCreationState.Failed);
-                	}
-                });
-//                .forEach(subscriptionData -> {
-//                	subscriptionsService.updateSubscription(subscriptionData.getObjectId(),
-//                			subscriptionData.getSubscriptionId(),
-//                			DataCreationState.Created);
-//                });
+                List<SubscriptionData> subscriptions = subscriptionsService
+                        .getSubscriptions(DataCreationState.Scheduled, 0,
+                                batchSize);
+                subscriptions
+                        .stream()
+                        .forEach(
+                                subscriptionData -> {
+                                    try
+                                    {
+                                        SubscriptionType subscriptionType = SubscriptionType
+                                                .valueOf(subscriptionData
+                                                        .getSubscriptionType());
+                                        String username = subscriptionData
+                                                .getUsername();
+                                        Alfresco alfresco = getAlfresco(username);
+                                        Subscription subscription = alfresco
+                                                .createSubscription(
+                                                        "-default-",
+                                                        subscriptionData
+                                                                .getSubscriberId(),
+                                                        subscriptionType,
+                                                        subscriptionData
+                                                                .getPath());
+                                        subscriptionsService.updateSubscription(
+                                                subscriptionData.getObjectId(),
+                                                subscription.getId(),
+                                                DataCreationState.Created);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        subscriptionsService.updateSubscription(
+                                                subscriptionData.getObjectId(),
+                                                DataCreationState.Failed);
+                                    }
+                                });
+                // .forEach(subscriptionData -> {
+                // subscriptionsService.updateSubscription(subscriptionData.getObjectId(),
+                // subscriptionData.getSubscriptionId(),
+                // DataCreationState.Created);
+                // });
 
                 long time = System.currentTimeMillis() + 5000L;
-                Event nextEvent = new Event(eventNameCreateSubscriptions, time, null);
+                Event nextEvent = new Event(eventNameCreateSubscriptions, time,
+                        null);
                 nextEvents.add(nextEvent);
-                msg = "Created " + subscriptions.size() + " subscriptions and raising '" + eventNameCreateSubscriptions
-                        + "' event.";
+                msg = "Created " + subscriptions.size()
+                        + " subscriptions and raising '"
+                        + eventNameCreateSubscriptions + "' event.";
             }
 
             EventResult result = new EventResult(msg, nextEvents);

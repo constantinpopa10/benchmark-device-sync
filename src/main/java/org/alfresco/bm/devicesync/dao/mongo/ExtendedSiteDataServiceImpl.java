@@ -23,7 +23,8 @@ import com.mongodb.QueryBuilder;
  * @author sglover
  *
  */
-public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements ExtendedSiteDataService
+public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements
+        ExtendedSiteDataService
 {
     @SuppressWarnings("unused")
     private DBCollection sitesCollection;
@@ -31,7 +32,7 @@ public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements 
 
     public ExtendedSiteDataServiceImpl(DB db, String sites, String siteMembers)
     {
-    	super(db, sites, siteMembers);
+        super(db, sites, siteMembers);
         this.sitesCollection = db.getCollection(sites);
         this.siteMembersCollection = db.getCollection(siteMembers);
     }
@@ -39,16 +40,14 @@ public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements 
     @Override
     public void checkIndexes()
     {
-    	super.checkIndexes();
+        super.checkIndexes();
 
         DBObject idxSiteRole = BasicDBObjectBuilder.start()
                 .append(SiteData.FIELD_CREATION_STATE, 1)
                 .append(SiteMemberData.FIELD_ROLE, 1)
-                .append(SiteMemberData.FIELD_RANDOMIZER, 1)
-                .get();
+                .append(SiteMemberData.FIELD_RANDOMIZER, 1).get();
         DBObject optIdxSiteRole = BasicDBObjectBuilder.start()
-                .append("name", "idx_SiteRole")
-                .append("unique", Boolean.FALSE)
+                .append("name", "idx_SiteRole").append("unique", Boolean.FALSE)
                 .get();
         siteMembersCollection.createIndex(idxSiteRole, optIdxSiteRole);
     }
@@ -58,38 +57,39 @@ public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements 
         DBObject queryObj = queryObjBuilder.get();
 
         DBObject fieldsObj = BasicDBObjectBuilder.start()
-                .add("randomizer", Boolean.TRUE)
+                .add("randomizer", Boolean.TRUE).get();
+
+        DBObject sortObj = BasicDBObjectBuilder.start().add("randomizer", -1)
                 .get();
-        
-        DBObject sortObj = BasicDBObjectBuilder.start()
-                .add("randomizer", -1)
-                .get();
-        
+
         // Find max
-        DBObject resultObj = siteMembersCollection.findOne(queryObj, fieldsObj, sortObj);
-        int maxRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
-        
+        DBObject resultObj = siteMembersCollection.findOne(queryObj, fieldsObj,
+                sortObj);
+        int maxRandomizer = resultObj == null ? 0 : (Integer) resultObj
+                .get("randomizer");
+
         // Find min
         sortObj.put("randomizer", +1);
         resultObj = siteMembersCollection.findOne(queryObj, fieldsObj, sortObj);
-        int minRandomizer = resultObj == null ? 0 : (Integer) resultObj.get("randomizer");
+        int minRandomizer = resultObj == null ? 0 : (Integer) resultObj
+                .get("randomizer");
 
         return new Range(minRandomizer, maxRandomizer);
     }
 
-	@Override
-	public Stream<SiteMemberData> randomSiteMembers(DataCreationState state, String[] roles,
-			int max)
-	{
-        QueryBuilder rangeBuilder = QueryBuilder
-        		.start();
+    @Override
+    public Stream<SiteMemberData> randomSiteMembers(DataCreationState state,
+            String[] roles, int max)
+    {
+        QueryBuilder rangeBuilder = QueryBuilder.start();
         if (state != null)
         {
-        	rangeBuilder.and(SiteMemberData.FIELD_CREATION_STATE).is(state.toString());
+            rangeBuilder.and(SiteMemberData.FIELD_CREATION_STATE).is(
+                    state.toString());
         }
         if (roles != null && roles.length > 0)
         {
-        	rangeBuilder.and(SiteMemberData.FIELD_ROLE).in(roles);
+            rangeBuilder.and(SiteMemberData.FIELD_ROLE).in(roles);
         }
         Range range = getRandomizerRange(rangeBuilder);
         int upper = range.getMax();
@@ -99,35 +99,38 @@ public class ExtendedSiteDataServiceImpl extends SiteDataServiceImpl implements 
         QueryBuilder builder = QueryBuilder.start();
         if (state != null)
         {
-        	builder.and(SiteMemberData.FIELD_CREATION_STATE).is(state.toString());
+            builder.and(SiteMemberData.FIELD_CREATION_STATE).is(
+                    state.toString());
         }
         if (roles != null && roles.length > 0)
         {
-        	builder.and(SiteMemberData.FIELD_ROLE).in(roles);
+            builder.and(SiteMemberData.FIELD_ROLE).in(roles);
         }
-        builder
-        	.and("randomizer").greaterThanEquals(Integer.valueOf(random));
+        builder.and("randomizer").greaterThanEquals(Integer.valueOf(random));
         DBObject queryObj = builder.get();
 
         boolean ascending = true;
 
         DBObject dbObject = siteMembersCollection.findOne(queryObj);
-        if(dbObject == null)
+        if (dbObject == null)
         {
-        	ascending = false;
+            ascending = false;
             queryObj.put("randomizer", new BasicDBObject("$lt", random));
         }
 
-        DBObject orderBy = BasicDBObjectBuilder
-        		.start("randomizer", (ascending ? 1 : -1))
-        		.get();
+        DBObject orderBy = BasicDBObjectBuilder.start("randomizer",
+                (ascending ? 1 : -1)).get();
 
-    	DBCursor cur = siteMembersCollection.find(queryObj).sort(orderBy).limit(max);
+        DBCursor cur = siteMembersCollection.find(queryObj).sort(orderBy)
+                .limit(max);
 
-    	Stream<SiteMemberData> stream = StreamSupport.stream(cur.spliterator(), false)
-    		.onClose(() -> cur.close())  // need to close cursor;
-    		.map(dbo -> SiteDataServiceImpl.convertSiteMemberDBObject(dbo));
+        Stream<SiteMemberData> stream = StreamSupport
+                .stream(cur.spliterator(), false).onClose(() -> cur.close()) // need
+                                                                             // to
+                                                                             // close
+                                                                             // cursor;
+                .map(dbo -> SiteDataServiceImpl.convertSiteMemberDBObject(dbo));
 
         return stream;
-	}
+    }
 }

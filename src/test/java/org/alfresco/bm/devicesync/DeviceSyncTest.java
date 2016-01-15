@@ -55,25 +55,26 @@ public class DeviceSyncTest
 
     private MongoSessionService sessionService;
     private UserDataServiceImpl userDataService;
-	private MongoSubscribersService subscribersService;
-	private MongoSubscriptionsService subscriptionsService;
-	private PublicApiFactory publicApiFactory;
-	private SiteDataServiceImpl siteDataService;
-	private MongoSyncsService syncsService;
+    private MongoSubscribersService subscribersService;
+    private MongoSubscriptionsService subscriptionsService;
+    private PublicApiFactory publicApiFactory;
+    private SiteDataServiceImpl siteDataService;
+    private MongoSyncsService syncsService;
 
-	private StopWatch stopWatch;
+    private StopWatch stopWatch;
 
-	private int numSubscribers = 100;
+    private int numSubscribers = 100;
 
-	@Before
-	public void before() throws Exception
-	{
-		this.stopWatch = new StopWatch();
+    @Before
+    public void before() throws Exception
+    {
+        this.stopWatch = new StopWatch();
 
         long time = System.currentTimeMillis();
 
         final MongoDbFactory factory = new MongoDbFactory();
-        boolean useEmbeddedMongo = ("true".equals(System.getProperty("useEmbeddedMongo")) ? true : false);
+        boolean useEmbeddedMongo = ("true".equals(System
+                .getProperty("useEmbeddedMongo")) ? true : false);
         if (useEmbeddedMongo)
         {
             mongoFactory = MongodForTestsFactory.with(Version.Main.PRODUCTION);
@@ -93,19 +94,22 @@ public class DeviceSyncTest
         userDataService = new UserDataServiceImpl(db, "users" + time);
         userDataService.afterPropertiesSet();
 
-        subscribersService = new MongoSubscribersService(db, "subscribers" + time);
+        subscribersService = new MongoSubscribersService(db, "subscribers"
+                + time);
         subscribersService.afterPropertiesSet();
 
-        subscriptionsService = new MongoSubscriptionsService(db, "subscriptions" + time);
+        subscriptionsService = new MongoSubscriptionsService(db,
+                "subscriptions" + time);
         subscriptionsService.afterPropertiesSet();
 
         syncsService = new MongoSyncsService(db, "syncs" + time);
         syncsService.afterPropertiesSet();
 
-        CMISEndpoint cmisEndpoint = new CMISEndpoint(BindingType.BROWSER, CmisVersion.CMIS_1_1);
-        publicApiFactory = new BasicAuthPublicApiFactory("http", "localhost", 8080,
-        		"https", "localhost", 9090,
-        		cmisEndpoint, 10, 5000, 5000, 5000, userDataService, "alfresco", "api", "service");
+        CMISEndpoint cmisEndpoint = new CMISEndpoint(BindingType.BROWSER,
+                CmisVersion.CMIS_1_1);
+        publicApiFactory = new BasicAuthPublicApiFactory("http", "localhost",
+                8080, "https", "localhost", 9090, cmisEndpoint, 10, 5000, 5000,
+                5000, userDataService, "alfresco", "api", "service");
 
         UserData userData = new UserData();
         userData.setDomain("default");
@@ -115,7 +119,8 @@ public class DeviceSyncTest
         userData.setCreationState(DataCreationState.Created);
         userDataService.createNewUser(userData);
 
-        siteDataService = new SiteDataServiceImpl(db, "sites" + time, "siteMembers" + time);
+        siteDataService = new SiteDataServiceImpl(db, "sites" + time,
+                "siteMembers" + time);
         siteDataService.afterPropertiesSet();
         SiteData newSite = new SiteData();
         newSite.setCreationState(DataCreationState.Created);
@@ -128,149 +133,174 @@ public class DeviceSyncTest
         newSite.setDomain("default");
         siteDataService.addSite(newSite);
 
-//        Alfresco alfresco = publicApiFactory.getAdminPublicApi();
-//        alfresco.
+        // Alfresco alfresco = publicApiFactory.getAdminPublicApi();
+        // alfresco.
 
-//        for(int i = 0; i < 500; i++)
-//        {
-//	        UserData userData = new UserData();
-//	        userData.setDomain("default");
-//	        userData.setUsername("username" + i);
-//	        userData.setPassword("username" + i);
-//	        userData.setEmail("username" + i + "@alfresco.com");
-//	        userData.setCreationState(DataCreationState.Created);
-//	        userDataService.createNewUser(userData);
-//        }
-	}
+        // for(int i = 0; i < 500; i++)
+        // {
+        // UserData userData = new UserData();
+        // userData.setDomain("default");
+        // userData.setUsername("username" + i);
+        // userData.setPassword("username" + i);
+        // userData.setEmail("username" + i + "@alfresco.com");
+        // userData.setCreationState(DataCreationState.Created);
+        // userDataService.createNewUser(userData);
+        // }
+    }
 
-	@After
-	public void after() throws Exception
-	{
-		if(mongoFactory != null)
-		{
-			mongoFactory.shutdown();
-		}
-	}
+    @After
+    public void after() throws Exception
+    {
+        if (mongoFactory != null)
+        {
+            mongoFactory.shutdown();
+        }
+    }
 
-	@Test
-	public void test1() throws Exception
-	{
-//		{
-//			CreateUsers createUsers = new CreateUsers(userDataService, numSubscribers);
-//
-//			Event event = new Event("createUsers", null);
-//			EventResult result = createUsers.processEvent(event, stopWatch);
-//			assertTrue(result.isSuccess());
-//			assertEquals(numSubscribers, userDataService.countUsers("default", DataCreationState.Created));
-//		}
-//
-//		stopWatch.reset();
-//
-//		{
-//			PrepareSites prepareSites = new PrepareSite(userDataService, numSubscribers);
-//
-//			Event event = new Event("createUsers", null);
-//			EventResult result = createUsers.processEvent(event, stopWatch);
-//			assertTrue(result.isSuccess());
-//			assertEquals(numSubscribers, userDataService.countUsers("default", DataCreationState.Created));
-//		}
-//
-//		stopWatch.reset();
+    @Test
+    public void test1() throws Exception
+    {
+        // {
+        // CreateUsers createUsers = new CreateUsers(userDataService,
+        // numSubscribers);
+        //
+        // Event event = new Event("createUsers", null);
+        // EventResult result = createUsers.processEvent(event, stopWatch);
+        // assertTrue(result.isSuccess());
+        // assertEquals(numSubscribers, userDataService.countUsers("default",
+        // DataCreationState.Created));
+        // }
+        //
+        // stopWatch.reset();
+        //
+        // {
+        // PrepareSites prepareSites = new PrepareSite(userDataService,
+        // numSubscribers);
+        //
+        // Event event = new Event("createUsers", null);
+        // EventResult result = createUsers.processEvent(event, stopWatch);
+        // assertTrue(result.isSuccess());
+        // assertEquals(numSubscribers, userDataService.countUsers("default",
+        // DataCreationState.Created));
+        // }
+        //
+        // stopWatch.reset();
 
-		{
-			PrepareSubscribers prepareSubscribers = new PrepareSubscribers(subscribersService,
-					"", "", numSubscribers);
+        {
+            PrepareSubscribers prepareSubscribers = new PrepareSubscribers(
+                    subscribersService, "", "", numSubscribers);
 
-			Event event = new Event("prepareSubscribers", null);
-			EventResult result = prepareSubscribers.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(numSubscribers, subscribersService.countSubscribers(DataCreationState.Scheduled));
-		}
+            Event event = new Event("prepareSubscribers", null);
+            EventResult result = prepareSubscribers.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(numSubscribers,
+                    subscribersService
+                            .countSubscribers(DataCreationState.Scheduled));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			CreateSubscribers createSubscribers = new CreateSubscribers(subscribersService, publicApiFactory,
-					10, "", "");
+        {
+            CreateSubscribers createSubscribers = new CreateSubscribers(
+                    subscribersService, publicApiFactory, 10, "", "");
 
-			Event event = new Event("createSubscribers", null);
-			EventResult result = createSubscribers.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(10, subscribersService.countSubscribers(DataCreationState.Created));
-		}
+            Event event = new Event("createSubscribers", null);
+            EventResult result = createSubscribers.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(10,
+                    subscribersService
+                            .countSubscribers(DataCreationState.Created));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			PrepareSubscribers prepareSubscribers = new PrepareSubscribers(subscribersService,
-					"", "", numSubscribers + 10);
+        {
+            PrepareSubscribers prepareSubscribers = new PrepareSubscribers(
+                    subscribersService, "", "", numSubscribers + 10);
 
-			Event event = new Event("prepareSubscribers1", null);
-			EventResult result = prepareSubscribers.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(numSubscribers, subscribersService.countSubscribers(DataCreationState.Scheduled));
-		}
+            Event event = new Event("prepareSubscribers1", null);
+            EventResult result = prepareSubscribers.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(numSubscribers,
+                    subscribersService
+                            .countSubscribers(DataCreationState.Scheduled));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			CreateSubscribers createSubscribers = new CreateSubscribers(subscribersService, publicApiFactory,
-					10, "", "");
+        {
+            CreateSubscribers createSubscribers = new CreateSubscribers(
+                    subscribersService, publicApiFactory, 10, "", "");
 
-			Event event = new Event("createSubscribers1", null);
-			EventResult result = createSubscribers.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(20, subscribersService.countSubscribers(DataCreationState.Created));
-		}
+            Event event = new Event("createSubscribers1", null);
+            EventResult result = createSubscribers.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(20,
+                    subscribersService
+                            .countSubscribers(DataCreationState.Created));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			PrepareSubscriptions prepareSubscriptions = new PrepareSubscriptions(subscriptionsService, "",
-					"", 10); // maxSubscriptions should be ignored in favour of the event parameter
+        {
+            PrepareSubscriptions prepareSubscriptions = new PrepareSubscriptions(
+                    subscriptionsService, "", "", 10); // maxSubscriptions
+                                                       // should be ignored in
+                                                       // favour of the event
+                                                       // parameter
 
-			DBObject dbObject = BasicDBObjectBuilder
-					.start(FIELD_MAX_SUBSCRIPTIONS, numSubscribers + 10)
-					.get();
-			Event event = new Event("prepareSubscriptions1", dbObject);
-			EventResult result = prepareSubscriptions.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(10, subscriptionsService.countSubscriptions(DataCreationState.Scheduled));
-		}
+            DBObject dbObject = BasicDBObjectBuilder.start(
+                    FIELD_MAX_SUBSCRIPTIONS, numSubscribers + 10).get();
+            Event event = new Event("prepareSubscriptions1", dbObject);
+            EventResult result = prepareSubscriptions.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(10,
+                    subscriptionsService
+                            .countSubscriptions(DataCreationState.Scheduled));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			CreateSubscriptions createSubscriptions = new CreateSubscriptions(subscriptionsService, publicApiFactory,
-					10, "", "");
+        {
+            CreateSubscriptions createSubscriptions = new CreateSubscriptions(
+                    subscriptionsService, publicApiFactory, 10, "", "");
 
-			Event event = new Event("createSubscriptions1", null);
-			EventResult result = createSubscriptions.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(10, subscriptionsService.countSubscriptions(DataCreationState.Created));
-		}
+            Event event = new Event("createSubscriptions1", null);
+            EventResult result = createSubscriptions.processEvent(event,
+                    stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(10,
+                    subscriptionsService
+                            .countSubscriptions(DataCreationState.Created));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			PrepareBatchSyncs prepareSyncs = new PrepareBatchSyncs(subscriptionsService, syncsService,
-					10, "");
+        {
+            PrepareBatchSyncs prepareSyncs = new PrepareBatchSyncs(
+                    subscriptionsService, syncsService, 10, "");
 
-			Event event = new Event("prepareSyncs1", null);
-			EventResult result = prepareSyncs.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(10, syncsService.countSyncs(SyncState.NotScheduled));
-		}
+            Event event = new Event("prepareSyncs1", null);
+            EventResult result = prepareSyncs.processEvent(event, stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(10, syncsService.countSyncs(SyncState.NotScheduled));
+        }
 
-		stopWatch.reset();
+        stopWatch.reset();
 
-		{
-			BatchExecuteSyncs executeSyncs = new BatchExecuteSyncs(sessionService, syncsService, publicApiFactory, 10, 3000);
+        {
+            BatchExecuteSyncs executeSyncs = new BatchExecuteSyncs(
+                    sessionService, syncsService, publicApiFactory, 10, 3000);
 
-			Event event = new Event("executeSyncs1", null);
-			EventResult result = executeSyncs.processEvent(event, stopWatch);
-			assertTrue(result.isSuccess());
-			assertEquals(10, syncsService.countSyncs(SyncState.Ready));
-		}
-	}
+            Event event = new Event("executeSyncs1", null);
+            EventResult result = executeSyncs.processEvent(event, stopWatch);
+            assertTrue(result.isSuccess());
+            assertEquals(10, syncsService.countSyncs(SyncState.Ready));
+        }
+    }
 }

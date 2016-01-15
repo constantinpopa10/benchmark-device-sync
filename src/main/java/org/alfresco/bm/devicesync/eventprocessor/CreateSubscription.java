@@ -40,20 +40,27 @@ public class CreateSubscription extends AbstractEventProcessor
     private final PublicApiFactory publicApiFactory;
 
     /**
-     * Constructor 
+     * Constructor
      * 
-     * @param siteDataService_p             Site Data service to retrieve site information from Mongo
-     * @param userDataService_p             User Data service to retrieve user information from Mongo
-     * @param desktopSyncClientRegistry_p   Registry to create the clients 
-     * @param numberOfClients_p             Number of clients to create
-     * @param nextEventId_p                 ID of the next event
+     * @param siteDataService_p
+     *            Site Data service to retrieve site information from Mongo
+     * @param userDataService_p
+     *            User Data service to retrieve user information from Mongo
+     * @param desktopSyncClientRegistry_p
+     *            Registry to create the clients
+     * @param numberOfClients_p
+     *            Number of clients to create
+     * @param nextEventId_p
+     *            ID of the next event
      */
-    public CreateSubscription(SiteDataService siteDataService, SubscribersService subscribersService,
-    		SubscriptionsService subscriptionsService, PublicApiFactory publicApiFactory)
+    public CreateSubscription(SiteDataService siteDataService,
+            SubscribersService subscribersService,
+            SubscriptionsService subscriptionsService,
+            PublicApiFactory publicApiFactory)
     {
-    	this.siteDataService = siteDataService;
-    	this.subscribersService = subscribersService;
-    	this.subscriptionsService = subscriptionsService;
+        this.siteDataService = siteDataService;
+        this.subscribersService = subscribersService;
+        this.subscriptionsService = subscriptionsService;
         this.publicApiFactory = publicApiFactory;
 
         // validate arguments
@@ -63,62 +70,67 @@ public class CreateSubscription extends AbstractEventProcessor
 
     private Alfresco getAlfresco(String username)
     {
-    	Alfresco alfresco = publicApiFactory.getPublicApi(username);
-    	return alfresco;
+        Alfresco alfresco = publicApiFactory.getPublicApi(username);
+        return alfresco;
     }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
-    	super.suspendTimer();
+        super.suspendTimer();
 
         try
         {
-        	DBObject dbObject = (DBObject)event.getData();
-        	String username = null;
-        	String subscriberId = null;
-        	String siteId = null;
-    		String targetPath = null;
+            DBObject dbObject = (DBObject) event.getData();
+            String username = null;
+            String subscriberId = null;
+            String siteId = null;
+            String targetPath = null;
 
-        	if(dbObject != null)
-        	{
-            	SubscriptionData subscriptionData = SubscriptionData
-            			.fromDBObject(dbObject);
-            	username = subscriptionData.getUsername();
-            	subscriberId = subscriptionData.getSubscriberId();
-            	siteId = subscriptionData.getSiteId();
-        	}
-        	else
-        	{
-                SubscriberData subscriberData = subscribersService.getRandomSubscriber(null);
+            if (dbObject != null)
+            {
+                SubscriptionData subscriptionData = SubscriptionData
+                        .fromDBObject(dbObject);
+                username = subscriptionData.getUsername();
+                subscriberId = subscriptionData.getSubscriberId();
+                siteId = subscriptionData.getSiteId();
+            }
+            else
+            {
+                SubscriberData subscriberData = subscribersService
+                        .getRandomSubscriber(null);
                 subscriberId = subscriberData.getSubscriberId();
-        		username = subscriberData.getUsername();
-        	}
+                username = subscriberData.getUsername();
+            }
 
-    		Alfresco alfresco = getAlfresco(username);
+            Alfresco alfresco = getAlfresco(username);
 
-    		if(siteId == null)
-    		{
-	    		SiteData siteData = siteDataService.randomSite("default", DataCreationState.Created);
-	    		siteId = siteData.getSiteId();
-	    		targetPath = siteData.getPath();
-    		}
+            if (siteId == null)
+            {
+                SiteData siteData = siteDataService.randomSite("default",
+                        DataCreationState.Created);
+                siteId = siteData.getSiteId();
+                targetPath = siteData.getPath();
+            }
 
-    		if(targetPath == null || targetPath.equals(""))
-    		{
-    			targetPath = "/Company Home/Sites/" + siteId + "/documentLibrary";
-    		}
+            if (targetPath == null || targetPath.equals(""))
+            {
+                targetPath = "/Company Home/Sites/" + siteId
+                        + "/documentLibrary";
+            }
 
-        	super.resumeTimer();
-    		Subscription subscription = alfresco.createSubscription("-default-", subscriberId, SubscriptionType.BOTH,
-    				targetPath);
-        	super.suspendTimer();
-        	subscriptionsService.addSubscription(siteId, username, subscriberId, subscription.getId(), 
-        			SubscriptionType.BOTH.toString(),
-        			targetPath, DataCreationState.Created);
+            super.resumeTimer();
+            Subscription subscription = alfresco.createSubscription(
+                    "-default-", subscriberId, SubscriptionType.BOTH,
+                    targetPath);
+            super.suspendTimer();
+            subscriptionsService.addSubscription(siteId, username,
+                    subscriberId, subscription.getId(),
+                    SubscriptionType.BOTH.toString(), targetPath,
+                    DataCreationState.Created);
 
             List<Event> nextEvents = new LinkedList<>();
-        	String msg = "Created subscription " + subscription;
+            String msg = "Created subscription " + subscription;
 
             EventResult result = new EventResult(msg, nextEvents);
 
