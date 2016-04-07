@@ -111,10 +111,9 @@ public class SyncBatch extends AbstractEventProcessor
                 {
                     List<Event> events = subscriptions.map(
                             ufd -> {
-                                SyncData syncData = new SyncData(ufd
-                                        .getSiteId(), ufd.getUsername(), ufd
-                                        .getSubscriberId(), ufd
-                                        .getSubscriptionId(), null);
+                                SyncData syncData = new SyncData(ufd.getSiteId(), ufd.getUsername(),
+                                        ufd.getSubscriberId(), ufd.getSubscriptionId(), ufd.getLastSyncMs(),
+                                        null);
                                 Event nextEvent = new Event(eventNameStartSync,
                                         scheduledTime, syncData.toDBObject());
                                 return nextEvent;

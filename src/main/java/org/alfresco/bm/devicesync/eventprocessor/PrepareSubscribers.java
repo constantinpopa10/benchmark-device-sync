@@ -22,7 +22,7 @@ public class PrepareSubscribers extends AbstractEventProcessor
     /** Logger for the class */
     private static Log logger = LogFactory.getLog(PrepareSubscribers.class);
 
-    private final int maxSubscribers;
+    private final int minSubscribers;
 
     private final SubscribersService subscribersService;
 
@@ -45,12 +45,12 @@ public class PrepareSubscribers extends AbstractEventProcessor
      */
     public PrepareSubscribers(SubscribersService subscribersService,
             String eventNameSubscribersBatch, String nextEventName,
-            int maxSubscribers)
+            int minSubscribers)
     {
         this.subscribersService = subscribersService;
         this.eventNameSubscribersBatch = eventNameSubscribersBatch;
         this.nextEventName = nextEventName;
-        this.maxSubscribers = maxSubscribers;
+        this.minSubscribers = minSubscribers;
 
         // validate arguments
         Util.checkArgumentNotNull(subscribersService, "subscribersService");
@@ -68,7 +68,7 @@ public class PrepareSubscribers extends AbstractEventProcessor
             List<Event> nextEvents = new LinkedList<>();
 
             long numSubscribers = subscribersService.countSubscribers(null);
-            if (maxSubscribers <= numSubscribers)
+            if (minSubscribers <= numSubscribers)
             {
                 msg = "Prepared subscribers, will now prepare subscriptions.";
                 Event newEvent = new Event(nextEventName, null);
@@ -76,7 +76,7 @@ public class PrepareSubscribers extends AbstractEventProcessor
             }
             else
             {
-                long count = maxSubscribers - numSubscribers;
+                long count = minSubscribers - numSubscribers;
                 int batchSize = 20;
                 int numBatches = (int) count / batchSize; // TODO
                 SubscriberBatchData subscriberBatchData = new SubscriberBatchData(

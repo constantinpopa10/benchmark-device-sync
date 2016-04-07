@@ -77,6 +77,7 @@ public class EndSync extends AbstractEventProcessor
             String username = syncData.getUsername();
             String subscriberId = syncData.getSubscriberId();
             String subscriptionId = syncData.getSubscriptionId();
+            long lastSyncMs = System.currentTimeMillis();
 
             Alfresco alfresco = getAlfresco(username);
 
@@ -85,11 +86,11 @@ public class EndSync extends AbstractEventProcessor
                     String.valueOf(syncId));
             super.suspendTimer();
 
-            subscriptionsService.incrementSubscriptionSyncs(subscriptionId);
+            subscriptionsService.updateSubscription(subscriptionId, lastSyncMs);
 
             SyncData data = new SyncData(null, syncData.getSiteId(),
                     syncData.getUsername(), syncData.getSubscriberId(),
-                    syncData.getSubscriptionId(), syncData.getSyncId(),
+                    syncData.getSubscriptionId(), syncData.getLastSyncMs(), syncData.getSyncId(),
                     syncData.getNumSyncChanges(), syncData.getNumRetries(),
                     syncData.getFinalNumRetries(),
                     syncData.isMaximumRetriesHit(), syncData.getEndTime(),
@@ -103,7 +104,7 @@ public class EndSync extends AbstractEventProcessor
             {
                 SyncData data = new SyncData(null, syncData.getSiteId(),
                         syncData.getUsername(), syncData.getSubscriberId(),
-                        syncData.getSubscriptionId(), syncData.getSyncId(),
+                        syncData.getSubscriptionId(), syncData.getLastSyncMs(), syncData.getSyncId(),
                         syncData.getNumSyncChanges(), syncData.getNumRetries(),
                         syncData.getFinalNumRetries(),
                         syncData.isMaximumRetriesHit(), syncData.getEndTime(),

@@ -20,6 +20,8 @@ public class TreeWalkData implements Serializable
     public static String FIELD_MIN_CONTENT_SIZE = "minContentSize";
     public static String FIELD_TOTAL_CONTENT_SIZE = "totalContentSize";
     public static String FIELD_MAX_FOLDER_DEPTH = "maxFolderDepth";
+    public static String FIELD_OBJECT_ID = "objectId";;
+    public static String FIELD_SITE_PATH = "sitePath";
 
     private static final long serialVersionUID = 946578159221599841L;
 
@@ -27,10 +29,16 @@ public class TreeWalkData implements Serializable
     protected int numDocuments;
     protected String username;
     protected String siteId;
+    protected String sitePath;
+    protected String objectId;
     protected int totalContentSize = 0;
     protected int maxContentSize = 0;
     protected int minContentSize = -1;
     protected int maxFolderDepth = 0;
+
+    public TreeWalkData()
+    {
+    }
 
     public TreeWalkData(int numFolders, int numDocuments)
     {
@@ -38,17 +46,26 @@ public class TreeWalkData implements Serializable
         this.numDocuments = numDocuments;
     }
 
+    public TreeWalkData(int numFolders, int numDocuments, String username, String objectId)
+    {
+        this.numFolders = numFolders;
+        this.numDocuments = numDocuments;
+        this.username = username;
+        this.objectId = objectId;
+    }
+
     public TreeWalkData(int numFolders, int numDocuments, String username,
-            String siteId)
+            String siteId, String sitePath)
     {
         this(numFolders, numDocuments);
         this.username = username;
         this.siteId = siteId;
+        this.sitePath = sitePath;
     }
 
     public TreeWalkData(int numFolders, int numDocuments, String username,
             String siteId, int totalContentSize, int maxContentSize,
-            int minContentSize, int maxFolderDepth)
+            int minContentSize, int maxFolderDepth, String sitePath, String objectId)
     {
         this(numFolders, numDocuments);
         this.username = username;
@@ -57,6 +74,13 @@ public class TreeWalkData implements Serializable
         this.maxContentSize = maxContentSize;
         this.minContentSize = minContentSize;
         this.maxFolderDepth = maxFolderDepth;
+        this.sitePath = sitePath;
+        this.objectId = objectId;
+    }
+
+    public String getObjectId()
+    {
+        return objectId;
     }
 
     public int getMaxFolderDepth()
@@ -87,6 +111,26 @@ public class TreeWalkData implements Serializable
     public int getNumDocuments()
     {
         return numDocuments;
+    }
+
+    public void setTotalContentSize(int totalContentSize)
+    {
+        this.totalContentSize = totalContentSize;
+    }
+
+    public void setMaxContentSize(int maxContentSize)
+    {
+        this.maxContentSize = maxContentSize;
+    }
+
+    public void setMinContentSize(int minContentSize)
+    {
+        this.minContentSize = minContentSize;
+    }
+
+    public void setMaxFolderDepth(int maxFolderDepth)
+    {
+        this.maxFolderDepth = maxFolderDepth;
     }
 
     public void setNumFolders(int numFolders)
@@ -159,34 +203,85 @@ public class TreeWalkData implements Serializable
         this.siteId = siteId;
     }
 
+    public String getSitePath()
+    {
+        return sitePath;
+    }
+
+    public void setSitePath(String sitePath)
+    {
+        this.sitePath = sitePath;
+    }
+
+    public void setObjectId(String objectId)
+    {
+        this.objectId = objectId;
+    }
+
+    public String getPath()
+    {
+        String siteId = getSiteId();
+        StringBuilder sb = new StringBuilder("/Sites/");
+        sb.append(siteId);
+        sb.append("/documentLibrary");
+        if(sitePath != null)
+        {
+            sb.append("/");
+            sb.append(sitePath);
+        }
+        String path = sb.toString();
+        return path;
+    }
+
     public DBObject toDBObject()
     {
-        BasicDBObjectBuilder builder = BasicDBObjectBuilder
-                .start(FIELD_NUM_DOCUMENTS, numDocuments)
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
+        toDBObject(builder);
+        return builder.get();
+    }
+
+    public void toDBObject(BasicDBObjectBuilder builder)
+    {
+        builder.add(FIELD_NUM_DOCUMENTS, numDocuments)
                 .add(FIELD_NUM_FOLDERS, numFolders)
                 .add(FIELD_USERNAME, username).add(FIELD_SITE_ID, siteId)
                 .add(FIELD_MAX_CONTENT_SIZE, maxContentSize)
                 .add(FIELD_MIN_CONTENT_SIZE, minContentSize)
                 .add(FIELD_TOTAL_CONTENT_SIZE, totalContentSize)
-                .add(FIELD_MAX_FOLDER_DEPTH, maxFolderDepth);
-        DBObject dbObject = builder.get();
-        return dbObject;
+                .add(FIELD_MAX_FOLDER_DEPTH, maxFolderDepth)
+                .add(FIELD_SITE_PATH, sitePath)
+                .add(FIELD_OBJECT_ID, objectId);
     }
 
     public static TreeWalkData fromDBObject(DBObject dbObject)
+    {
+        TreeWalkData treeWalkData = new TreeWalkData();
+        fromDBObject(treeWalkData, dbObject);
+        return treeWalkData;
+    }
+
+    public static void fromDBObject(TreeWalkData treeWalkData, DBObject dbObject)
     {
         int numFolders = (Integer) dbObject.get(FIELD_NUM_FOLDERS);
         int numDocuments = (Integer) dbObject.get(FIELD_NUM_DOCUMENTS);
         String username = (String) dbObject.get(FIELD_USERNAME);
         String siteId = (String) dbObject.get(FIELD_SITE_ID);
+        String objectId = (String) dbObject.get(FIELD_OBJECT_ID);
+        String sitePath = (String) dbObject.get(FIELD_SITE_PATH);
         Integer maxContentSize = (Integer) dbObject.get(FIELD_MAX_CONTENT_SIZE);
         Integer minContentSize = (Integer) dbObject.get(FIELD_MIN_CONTENT_SIZE);
         Integer totalContentSize = (Integer) dbObject
                 .get(FIELD_TOTAL_CONTENT_SIZE);
         Integer maxFolderDepth = (Integer) dbObject.get(FIELD_MAX_FOLDER_DEPTH);
-        TreeWalkData treeWalkData = new TreeWalkData(numFolders, numDocuments,
-                username, siteId, totalContentSize, maxContentSize,
-                minContentSize, maxFolderDepth);
-        return treeWalkData;
+        treeWalkData.setNumFolders(numFolders);
+        treeWalkData.setNumDocuments(numDocuments);
+        treeWalkData.setUsername(username);
+        treeWalkData.setSiteId(siteId);
+        treeWalkData.setTotalContentSize(totalContentSize);
+        treeWalkData.setMaxContentSize(maxContentSize);
+        treeWalkData.setMinContentSize(minContentSize);
+        treeWalkData.setMaxFolderDepth(maxFolderDepth);
+        treeWalkData.setObjectId(objectId);
+        treeWalkData.setSitePath(sitePath);
     }
 }

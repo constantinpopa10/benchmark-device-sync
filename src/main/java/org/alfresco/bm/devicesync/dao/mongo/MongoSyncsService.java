@@ -27,19 +27,11 @@ public class MongoSyncsService implements SyncsService, InitializingBean
     private static String FIELD_SITE_ID = "siteId";
     private static String FIELD_SYNC_ID = "syncId";
     private static String FIELD_USERNAME = "username";
-    private static String FIELD_RANDOMIZER = "randomizer";
     private static String FIELD_SUBSCRIBER_ID = "subscriberId";
     private static String FIELD_SUBSCRIPTION_ID = "subscriptionId";
-    private static String FIELD_SUBSCRIPTION_TYPE = "subscriptionType";
-    private static String FIELD_PATH = "path";
     private static String FIELD_STATE = "state";
     private static String FIELD_MESSAGE = "message";
-    private static String FIELD_MAX_RETRIES_HIT = "maxRetriesHit";
-    private static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
-    private static String FIELD_MSG = "msg";
-    private static String FIELD_NUM_RETRIES = "numRetries";
-    private static String FIELD_END_TIME = "endTime";
-    private static String FIELD_COUNT = "count";
+    private static String FIELD_LAST_SYNC_MS = "lastSyncMs";
 
     /** The collection of users, which can be reused by derived extensions. */
     protected final DBCollection collection;
@@ -96,10 +88,10 @@ public class MongoSyncsService implements SyncsService, InitializingBean
             Long syncId = (Long) dbObject.get(FIELD_SYNC_ID);
             String username = (String) dbObject.get(FIELD_USERNAME);
             String subscriberId = (String) dbObject.get(FIELD_SUBSCRIBER_ID);
-            String subscriptionId = (String) dbObject
-                    .get(FIELD_SUBSCRIPTION_ID);
+            String subscriptionId = (String) dbObject.get(FIELD_SUBSCRIPTION_ID);
+            Long lastSyncMs = (Long) dbObject.get(FIELD_LAST_SYNC_MS);
             SyncData subscription = new SyncData(objectId, siteId, username,
-                    subscriberId, subscriptionId, syncId, -1, -1, 0, false,
+                    subscriberId, subscriptionId, lastSyncMs, syncId, -1, -1, 0, false,
                     null, null, false);
             syncs.add(subscription);
         }

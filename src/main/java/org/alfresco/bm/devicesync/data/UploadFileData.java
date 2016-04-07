@@ -15,6 +15,7 @@ public class UploadFileData
     private String username;
     private String subscriberId;
     private String subscriptionId;
+    private Long lastSyncMs;
     private String siteId;
     private String siteRole;
     private String path;
@@ -25,7 +26,7 @@ public class UploadFileData
     private List<List<String>> parentNodeIds;
 
     public UploadFileData(String username, String subscriberId,
-            String subscriptionId, String siteId, String siteRole, String path,
+            String subscriptionId, Long lastSyncMs, String siteId, String siteRole, String path,
             Integer numChildren, Integer numChildFolders, String nodeId,
             String nodeType, List<List<String>> parentNodeIds)
     {
@@ -33,6 +34,7 @@ public class UploadFileData
         this.username = username;
         this.subscriberId = subscriberId;
         this.subscriptionId = subscriptionId;
+        this.lastSyncMs = lastSyncMs;
         this.siteId = siteId;
         this.siteRole = siteRole;
         this.path = path;
@@ -41,6 +43,11 @@ public class UploadFileData
         this.nodeId = nodeId;
         this.nodeType = nodeType;
         this.parentNodeIds = parentNodeIds;
+    }
+
+    public Long getLastSyncMs()
+    {
+        return lastSyncMs;
     }
 
     public String getNodeId()
@@ -125,22 +132,23 @@ public class UploadFileData
         String nodeType = (String) dbObject.get("nodeType");
         Integer numChildren = (Integer) dbObject.get("numChildren");
         Integer numChildFolders = (Integer) dbObject.get("numChildFolders");
+        Long lastSyncMs = (Long) dbObject.get("lastSyncMs");
         List<List<String>> parentNodeIds = (List<List<String>>) dbObject
                 .get("parentNodeIds");
         UploadFileData uploadFileData = new UploadFileData(username,
-                subscriberId, subscriptionId, siteId, siteRole, path,
+                subscriberId, subscriptionId, lastSyncMs, siteId, siteRole, path,
                 numChildren, numChildFolders, nodeId, nodeType, parentNodeIds);
         return uploadFileData;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "UploadFileData [username=" + username + ", subscriberId="
                 + subscriberId + ", subscriptionId=" + subscriptionId
-                + ", siteId=" + siteId + ", siteRole=" + siteRole + ", path="
-                + path + ", numChildren=" + numChildren + ", numChildFolders="
-                + numChildFolders + ", nodeType=" + nodeType + ", nodeId="
-                + nodeId + ", parentNodeIds=" + parentNodeIds + "]";
+                + ", lastSyncMs=" + lastSyncMs + ", siteId=" + siteId
+                + ", siteRole=" + siteRole + ", path=" + path + ", numChildren="
+                + numChildren + ", numChildFolders=" + numChildFolders
+                + ", nodeType=" + nodeType + ", nodeId=" + nodeId
+                + ", parentNodeIds=" + parentNodeIds + "]";
     }
 }

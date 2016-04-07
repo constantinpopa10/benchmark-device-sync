@@ -1,6 +1,6 @@
 package org.alfresco.bm.devicesync.dao.mongo;
 
-import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_RANDOMIZER;
+import static org.alfresco.bm.devicesync.data.SubscriptionData.*;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SITE_ID;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_STATE;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SUBSCRIPTION_ID;
@@ -337,7 +337,58 @@ public class MongoSubscriptionsService implements SubscriptionsService,
     }
 
     @Override
-    public Stream<SubscriptionData> getRandomSubscriptions(String username,
+    public Stream<SubscriptionData> getRandomSubscriptionsByLastSyncTime(String username,
+            int limit)
+    {
+        Range range = getRandomizerRange();
+        int upper = range.getMax();
+        int lower = range.getMin();
+        int random = lower + (int) (Math.random() * (double) (upper - lower));
+
+        BasicDBObjectBuilder builder = BasicDBObjectBuilder.start()
+                .add(FIELD_STATE, DataCreationState.Created.toString())
+                .push(FIELD_RANDOMIZER).add("$gte", Integer.valueOf(random))
+                .pop();
+        if (username != null)
+        {
+            builder.add(FIELD_USERNAME, username);
+        }
+        DBObject queryObj = builder.get();
+        DBObject orderBy = BasicDBObjectBuilder
+                .start(SubscriptionData.FIELD_LAST_SYNC_MS, 1)
+                .add(FIELD_RANDOMIZER, 1)
+                .get();
+        long count = collection.count(queryObj);
+        if (limit > 0 && count < limit)
+        {
+            BasicDBObjectBuilder builder1 = BasicDBObjectBuilder.start()
+                    .push(FIELD_RANDOMIZER)
+                    .add("$lte", Integer.valueOf(random)).pop();
+            if (username != null)
+            {
+                builder.add(FIELD_USERNAME, username);
+            }
+            queryObj = builder1.get();
+            count = collection.count(queryObj);
+            if (limit > 0 && count < limit)
+            {
+                throw new RuntimeException(
+                        "Not enough subscriptions for limit " + limit);
+            }
+            orderBy = BasicDBObjectBuilder.start(FIELD_RANDOMIZER, -1).get();
+        }
+
+        DBCursor cur = collection.find(queryObj).sort(orderBy).limit(limit);
+        Stream<SubscriptionData> stream = StreamSupport
+                .stream(cur.spliterator(), false).onClose(() -> cur.close())
+                .map(dbo -> SubscriptionData.fromDBObject(dbo)); // need to
+                                                                 // close
+                                                                 // cursor;
+        return stream;
+    }
+
+    @Override
+    public Stream<SubscriptionData> getRandomSubscriptions(String username, 
             int limit)
     {
         Range range = getRandomizerRange();
@@ -394,12 +445,17 @@ public class MongoSubscriptionsService implements SubscriptionsService,
     }
 
     @Override
-    public void incrementSubscriptionSyncs(String subscriptionId)
+    public void updateSubscription(String subscriptionId, long lastSyncMs)
     {
         DBObject query = BasicDBObjectBuilder.start(FIELD_SUBSCRIPTION_ID,
                 subscriptionId).get();
-        DBObject update = BasicDBObjectBuilder.start().push("$inc")
-                .add("quantity", 1).add("numSyncs", 1).pop().get();
+        DBObject update = BasicDBObjectBuilder
+                .start()
+                .push("$inc")
+                    .add("quantity", 1).add("numSyncs", 1)
+                .pop()
+                .add("$set", BasicDBObjectBuilder.start(FIELD_LAST_SYNC_MS, lastSyncMs).get())
+                .get();
         collection.update(query, update, false, false);
     }
 }

@@ -25,7 +25,7 @@ public class PrepareSubscriptions extends AbstractEventProcessor
 
     private final SubscriptionsService subscriptionsService;
 
-    private final int maxSubscriptions;
+    private final int minSubscriptions;
 
     private final String nextEventName;
     private final String eventNameSubscriptionsBatch;
@@ -46,61 +46,19 @@ public class PrepareSubscriptions extends AbstractEventProcessor
      */
     public PrepareSubscriptions(SubscriptionsService subscriptionsService,
             String eventNameSubscriptionsBatch, String nextEventName,
-            int maxSubscriptions)
+            int minSubscriptions)
     {
         this.subscriptionsService = subscriptionsService;
         this.eventNameSubscriptionsBatch = eventNameSubscriptionsBatch;
         this.nextEventName = nextEventName;
-        this.maxSubscriptions = maxSubscriptions;
+        this.minSubscriptions = minSubscriptions;
 
         // validate arguments
         Util.checkArgumentNotNull(subscriptionsService, "subscriptionsService");
         Util.checkArgumentNotNull(eventNameSubscriptionsBatch,
                 "eventNameSubscriptionsBatch");
-        Util.checkArgumentNotNull(maxSubscriptions, "maxSubscriptions");
+        Util.checkArgumentNotNull(minSubscriptions, "minSubscriptions");
     }
-
-    // private EventResult prepareNewSubscriptions(int numSubscriptions)
-    // {
-    // List<Event> nextEvents = new LinkedList<>();
-    //
-    // List<SubscriberData> subscribers = subscribersService.getSubscribers(
-    // DataCreationState.Created, 0, numSubscriptions);
-    // subscribers.stream().forEach(susbcriberData -> {
-    // List<SiteData> sites = siteDataService.getSites("default",
-    // DataCreationState.Created, 0, 1);
-    // if(sites.size() > 0)
-    // {
-    // SiteData siteData = sites.get(0);
-    // String username = susbcriberData.getUsername();
-    // String subscriberId = susbcriberData.getSubscriberId();
-    // String subscriptionType = SubscriptionType.CONTENT.toString();
-    // String sitePath = siteData.getPath();
-    // if(sitePath == null || sitePath.equals(""))
-    // {
-    // sitePath = "/Company Home/Sites/" + siteData.getSiteId() +
-    // "/documentLibrary";
-    // }
-    // subscriptionsService.addSubscription(username, subscriberId,
-    // subscriptionType, sitePath,
-    // DataCreationState.Scheduled);
-    // }
-    // });
-    //
-    // Event event = new Event(eventNameCreateSubscriptions, null);
-    // nextEvents.add(event);
-    // String msg = "Prepared " + numSubscriptions +
-    // " subscriptions and raising '" + event.getName()
-    // + "' event.";
-    //
-    // if (logger.isDebugEnabled())
-    // {
-    // logger.debug(msg);
-    // }
-    //
-    // EventResult result = new EventResult(msg, nextEvents);
-    // return result;
-    // }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
@@ -112,7 +70,7 @@ public class PrepareSubscriptions extends AbstractEventProcessor
 
             long numSubscriptions = subscriptionsService
                     .countSubscriptions(DataCreationState.Created);
-            if (maxSubscriptions <= numSubscriptions)
+            if (minSubscriptions <= numSubscriptions)
             {
                 msg = "Prepared subscriptions, nothing to do";
                 Event newEvent = new Event(nextEventName, null);
@@ -120,7 +78,7 @@ public class PrepareSubscriptions extends AbstractEventProcessor
             }
             else
             {
-                int count = (int) (maxSubscriptions - numSubscriptions); // TODO
+                int count = (int) (minSubscriptions - numSubscriptions); // TODO
                 int batchSize = 20;
                 int numBatches = (int) count / batchSize; // TODO
                 SubscriptionBatchData subscriptionBatchData = new SubscriptionBatchData(
@@ -128,35 +86,6 @@ public class PrepareSubscriptions extends AbstractEventProcessor
                 Event newEvent = new Event(eventNameSubscriptionsBatch,
                         subscriptionBatchData.toDBObject());
                 nextEvents.add(newEvent);
-
-                // List<SubscriberData> subscribers =
-                // subscribersService.getSubscribers(
-                // DataCreationState.Created, 0, count);
-                // subscribers.stream().forEach(susbcriberData -> {
-                // List<SiteData> sites = siteDataService.getSites("default",
-                // DataCreationState.Created, 0, 1);
-                // if(sites.size() > 0)
-                // {
-                // SiteData siteData = sites.get(0);
-                // String username = susbcriberData.getUsername();
-                // String subscriberId = susbcriberData.getSubscriberId();
-                // String subscriptionType =
-                // SubscriptionType.CONTENT.toString();
-                // String sitePath = siteData.getPath();
-                // if(sitePath == null || sitePath.equals(""))
-                // {
-                // sitePath = "/Company Home/Sites/" + siteData.getSiteId() +
-                // "/documentLibrary";
-                // }
-                // subscriptionsService.addSubscription(username, subscriberId,
-                // subscriptionType, sitePath,
-                // DataCreationState.Scheduled);
-                // }
-                // });
-                //
-                // Event nextEvent = new Event(eventNameCreateSubscriptions,
-                // null);
-                // nextEvents.add(nextEvent);
 
                 msg = "Prepared " + count + " subscriptions.";
             }

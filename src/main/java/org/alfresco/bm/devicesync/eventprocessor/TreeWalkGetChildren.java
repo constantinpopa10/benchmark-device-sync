@@ -60,7 +60,7 @@ public class TreeWalkGetChildren extends AbstractEventProcessor
                 {
                     Folder childFolder = (Folder) child;
                     String folderId = childFolder.getId();
-                    getChildrenData.setFolderId(folderId);
+                    getChildrenData.setObjectId(folderId);
                     GetChildrenData getChildrenData1 = new GetChildrenData(
                             folderId, getChildrenData.getNumFolders(),
                             getChildrenData.getNumDocuments(),
@@ -110,11 +110,10 @@ public class TreeWalkGetChildren extends AbstractEventProcessor
         super.suspendTimer();
 
         DBObject dbObject = (DBObject) event.getData();
-        GetChildrenData getChildrenData = GetChildrenData
-                .fromDBObject(dbObject);
+        GetChildrenData getChildrenData = GetChildrenData.fromDBObject(dbObject);
         String username = getChildrenData.getUsername();
         Session session = cmisSessionFactory.getCMISSession(username);
-        String folderId = getChildrenData.getFolderId();
+        String folderId = getChildrenData.getObjectId();
 
         List<Event> nextEvents = new LinkedList<Event>();
 

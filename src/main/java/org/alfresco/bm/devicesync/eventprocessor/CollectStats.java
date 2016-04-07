@@ -3,6 +3,7 @@ package org.alfresco.bm.devicesync.eventprocessor;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.alfresco.bm.devicesync.dao.MetricsService;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor.ActiveMQStats;
 import org.alfresco.bm.devicesync.util.ActiveMQMonitor.BrokerStats;
@@ -12,7 +13,6 @@ import org.alfresco.bm.devicesync.util.Util;
 import org.alfresco.bm.event.AbstractEventProcessor;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
-import org.alfresco.monitoring.dao.MetricsService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.social.alfresco.api.Alfresco;

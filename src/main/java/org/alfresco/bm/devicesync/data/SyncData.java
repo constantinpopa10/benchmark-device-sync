@@ -27,6 +27,7 @@ public class SyncData implements Serializable
     public static String FIELD_STATE = "state";
     public static String FIELD_MESSAGE = "message";
     public static String FIELD_MAX_RETRIES_HIT = "maxRetriesHit";
+    public static String FIELD_LAST_SYNC_MS = "lastSyncMs";
     public static String FIELD_NUM_SYNC_CHANGES = "numSyncChanges";
     public static String FIELD_MSG = "msg";
     public static String FIELD_NUM_RETRIES = "numRetries";
@@ -48,6 +49,7 @@ public class SyncData implements Serializable
     private String username;
     private String subscriberId;
     private String subscriptionId;
+    private Long lastSyncMs;
     private String siteId;
     private Long syncId;
     private String result;
@@ -55,14 +57,14 @@ public class SyncData implements Serializable
     private List<Change> changes;
 
     public SyncData(String siteId, String username, String subscriberId,
-            String subscriptionId, Long endTime)
+            String subscriptionId, Long lastSyncMs, Long endTime)
     {
-        this(null, siteId, username, subscriberId, subscriptionId, null, -1, 0,
+        this(null, siteId, username, subscriberId, subscriptionId, lastSyncMs, null, -1, 0,
                 0, false, endTime, null, false);
     }
 
     public SyncData(ObjectId objectId, String siteId, String username,
-            String subscriberId, String subscriptionId, Long syncId,
+            String subscriberId, String subscriptionId, Long lastSyncMs, Long syncId,
             int numSyncChanges, int numRetries, int finalNumRetries,
             boolean maximumRetriesHit, Long endTime, String msg,
             Boolean gotResults)
@@ -74,6 +76,7 @@ public class SyncData implements Serializable
         this.username = username;
         this.subscriberId = subscriberId;
         this.subscriptionId = subscriptionId;
+        this.lastSyncMs = lastSyncMs;
         this.syncId = syncId;
         this.endTime = endTime;
         this.numSyncChanges = numSyncChanges;
@@ -82,6 +85,11 @@ public class SyncData implements Serializable
         this.maximumRetriesHit = maximumRetriesHit;
         this.gotResults = (gotResults != null ? gotResults.booleanValue()
                 : false);
+    }
+
+    public Long getLastSyncMs()
+    {
+        return lastSyncMs;
     }
 
     public boolean isGotResults()
@@ -160,6 +168,7 @@ public class SyncData implements Serializable
                 .add(FIELD_FINAL_NUM_RETRIES, getFinalNumRetries())
                 .add(FIELD_MAX_RETRIES_HIT, isMaximumRetriesHit())
                 .add(FIELD_NUM_SYNC_CHANGES, getNumSyncChanges())
+                .add(FIELD_LAST_SYNC_MS, getLastSyncMs())
                 .add(FIELD_GOT_RESULTS, gotResults).add(FIELD_MSG, msg)
                 .add(FIELD_RESULT, result);
         if (getSubscriptionId() != null)
@@ -213,8 +222,9 @@ public class SyncData implements Serializable
         Long endTime = (Long) dbObject.get(FIELD_END_TIME);
         Boolean gotResults = (Boolean) dbObject.get(FIELD_GOT_RESULTS);
         String msg = (String) dbObject.get("msg");
+        Long lastSyncMs = (Long) dbObject.get("lastSyncMs");
         SyncData syncData = new SyncData(id, siteId, username, subscriberId,
-                subscriptionId, syncId, numSyncChanges, numRetries,
+                subscriptionId, lastSyncMs, syncId, numSyncChanges, numRetries,
                 finalNumRetries, maximumRetriesHit, endTime, msg, gotResults);
         return syncData;
     }

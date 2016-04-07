@@ -22,7 +22,9 @@ public class SubscriptionData
     public static String FIELD_PATH = "path";
     public static String FIELD_STATE = "state";
     public static String FIELD_SITE_ID = "siteId";
+    public static String FIELD_LAST_SYNC_MS = "lastSyncMs";
 
+    private Long lastSyncMs;
     private ObjectId objectId;
     private String siteId;
     private int randomizer;
@@ -43,15 +45,15 @@ public class SubscriptionData
     public SubscriptionData(String username, String subscriberId)
     {
         this.username = username;
-        this.subscriberId = subscriberId;
+        this.subscriberId = subscriberId; 
     }
 
-    public SubscriptionData(ObjectId objectId, String siteId, String username,
+    public SubscriptionData(ObjectId objectId, Long lastSyncMs, String siteId, String username,
             String subscriberId, String subscriptionId,
             String subscriptionType, String path, DataCreationState state,
             int randomizer)
     {
-        this(objectId, siteId, username, subscriberId, subscriptionId,
+        this(objectId, lastSyncMs, siteId, username, subscriberId, subscriptionId,
                 subscriptionType, path);
         this.randomizer = randomizer;
         this.state = state;
@@ -61,7 +63,7 @@ public class SubscriptionData
             String subscriberId, String subscriptionId,
             String subscriptionType, String path, DataCreationState state)
     {
-        this(null, siteId, username, subscriberId, subscriptionId,
+        this(null, null, siteId, username, subscriberId, subscriptionId,
                 subscriptionType, path);
         this.state = state;
     }
@@ -80,12 +82,13 @@ public class SubscriptionData
         this.state = state;
     }
 
-    public SubscriptionData(ObjectId objectId, String siteId, String username,
+    public SubscriptionData(ObjectId objectId, Long lastSyncMs, String siteId, String username,
             String subscriberId, String subscriptionId,
             String subscriptionType, String path)
     {
         super();
         this.randomizer = (int) (Math.random() * 1E6);
+        this.lastSyncMs = lastSyncMs;
         this.objectId = objectId;
         this.siteId = siteId;
         this.username = username;
@@ -98,10 +101,15 @@ public class SubscriptionData
     public SubscriptionData addSubscription(Subscription subscription)
     {
         SubscriptionData subscriptionData = new SubscriptionData(objectId,
-                siteId, username, subscriberId, subscription.getId(),
+                lastSyncMs, siteId, username, subscriberId, subscription.getId(),
                 subscriptionType, path);
         subscriptionData.randomizer = randomizer;
         return subscriptionData;
+    }
+
+    public Long getLastSyncMs()
+    {
+        return lastSyncMs;
     }
 
     public String getSiteId()
@@ -188,7 +196,8 @@ public class SubscriptionData
             String subscriptionType = (String) dbObject
                     .get(FIELD_SUBSCRIPTION_TYPE);
             String path = (String) dbObject.get(FIELD_PATH);
-            subscriptionData = new SubscriptionData(id, siteId, username,
+            Long lastSyncMs = (Long) dbObject.get(FIELD_LAST_SYNC_MS);
+            subscriptionData = new SubscriptionData(id, lastSyncMs, siteId, username,
                     subscriberId, subscriptionId, subscriptionType, path,
                     state, randomizer);
         }
@@ -197,12 +206,12 @@ public class SubscriptionData
     }
 
     @Override
-    public String toString()
-    {
-        return "SubscriptionData [objectId=" + objectId + ", siteId=" + siteId
-                + ", randomizer=" + randomizer + ", username=" + username
-                + ", subscriberId=" + subscriberId + ", subscriptionId="
-                + subscriptionId + ", subscriptionType=" + subscriptionType
-                + ", path=" + path + ", state=" + state + "]";
+    public String toString() {
+        return "SubscriptionData [lastSyncMs=" + lastSyncMs + ", objectId="
+                + objectId + ", siteId=" + siteId + ", randomizer=" + randomizer
+                + ", username=" + username + ", subscriberId=" + subscriberId
+                + ", subscriptionId=" + subscriptionId + ", subscriptionType="
+                + subscriptionType + ", path=" + path + ", state=" + state
+                + "]";
     }
 }

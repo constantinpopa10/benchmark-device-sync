@@ -41,5 +41,8 @@ public interface SubscriptionsService
 
     Stream<SubscriptionData> getRandomSubscriptions(String username, int limit);
 
-    void incrementSubscriptionSyncs(String subscriptionId);
+    Stream<SubscriptionData> getRandomSubscriptionsByLastSyncTime(String username,
+            int limit);
+
+    void updateSubscription(String subscriptionId, long lastSyncMs);
 }

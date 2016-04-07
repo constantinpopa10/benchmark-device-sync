@@ -120,10 +120,9 @@ public class UploadAndSyncBatch extends AbstractEventProcessor
                                         uploadScheduledTime, ufd.toDBObject());
                                 ret.add(uploadFileEvent);
 
-                                SyncData syncData = new SyncData(ufd
-                                        .getSiteId(), ufd.getUsername(), ufd
-                                        .getSubscriberId(), ufd
-                                        .getSubscriptionId(), null);
+                                SyncData syncData = new SyncData(ufd.getSiteId(), ufd.getUsername(),
+                                        ufd.getSubscriberId(), ufd.getSubscriptionId(), ufd.getLastSyncMs(),
+                                        null);
                                 Event syncEvent = new Event(eventNameStartSync,
                                         uploadScheduledTime
                                                 + waitTimeBetweenUploadAndSync,

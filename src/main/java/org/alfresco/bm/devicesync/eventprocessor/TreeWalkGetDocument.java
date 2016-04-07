@@ -62,11 +62,10 @@ public class TreeWalkGetDocument extends AbstractEventProcessor
         super.suspendTimer();
 
         DBObject dbObject = (DBObject) event.getData();
-        GetDocumentData getContentDataData = GetDocumentData
-                .fromDBObject(dbObject);
+        GetDocumentData getContentDataData = GetDocumentData.fromDBObject(dbObject);
         String username = getContentDataData.getUsername();
         Session session = cmisSessionFactory.getCMISSession(username);
-        String documentId = getContentDataData.getDocumentId();
+        String documentId = getContentDataData.getObjectId();
 
         List<Event> nextEvents = new LinkedList<Event>();
 

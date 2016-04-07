@@ -29,14 +29,18 @@ public class CMISSessionFactory
     private UserDataService userDataService;
 
     public CMISSessionFactory(UserDataService userDataService,
-            String alfrescoHost, int alfrescoPort)
+            String alfrescoScheme, String alfrescoHost, Integer alfrescoPort)
     {
         super();
         this.userDataService = userDataService;
-        StringBuilder sb = new StringBuilder("http://");
+        StringBuilder sb = new StringBuilder(alfrescoScheme);
+        sb.append("://");
         sb.append(alfrescoHost);
-        sb.append(":");
-        sb.append(alfrescoPort);
+        if(alfrescoPort != null)
+        {
+            sb.append(":");
+            sb.append(alfrescoPort);
+        }
         sb.append("/alfresco/api/");
         sb.append("-default-");
         sb.append("/public/cmis/versions/1.1/browser");

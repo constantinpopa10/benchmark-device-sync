@@ -77,12 +77,13 @@ public class SiteSampleSelector
     public Stream<UploadFileData> getSubscriptions(int max)
     {
         Stream<SubscriptionData> subscriptions = subscriptionsService
-                .getRandomSubscriptions(null, max);
+                .getRandomSubscriptionsByLastSyncTime(null, max);
         Stream<UploadFileData> ret = subscriptions
                 .map(subscriptionData -> {
                     String siteId = subscriptionData.getSiteId();
                     String username = subscriptionData.getUsername();
                     String subscriberId = subscriptionData.getSubscriberId();
+                    Long lastSyncMs = subscriptionData.getLastSyncMs();
                     String subscriptionId = subscriptionData
                             .getSubscriptionId();
 
@@ -107,7 +108,7 @@ public class SiteSampleSelector
                                 .getParentNodeIds();
 
                         uploadFileData = new UploadFileData(username,
-                                subscriberId, subscriptionId, siteId, siteRole,
+                                subscriberId, subscriptionId, lastSyncMs, siteId, siteRole,
                                 path, numChildren, numChildFolders, nodeId,
                                 nodeType, parentNodeIds);
                     }
