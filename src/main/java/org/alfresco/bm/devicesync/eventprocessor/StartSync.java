@@ -110,7 +110,7 @@ public class StartSync extends AbstractEventProcessor
                 syncData = new SyncData(null, syncData.getSiteId(),
                         syncData.getUsername(), syncData.getSubscriberId(),
                         syncData.getSubscriptionId(), syncData.getLastSyncMs(), syncId, 0, 0, 0, false,
-                        endTime, "Started sync " + syncId, false);
+                        endTime, "Started sync " + syncId, false, false);
                 Event nextEvent = new Event("getSync", scheduledTime,
                         syncData.toDBObject());
                 nextEvents.add(nextEvent);
@@ -120,7 +120,7 @@ public class StartSync extends AbstractEventProcessor
                 syncData = new SyncData(null, syncData.getSiteId(),
                         syncData.getUsername(), syncData.getSubscriberId(),
                         syncData.getSubscriptionId(), syncData.getLastSyncMs(), null, 0, 0, 0, false,
-                        endTime, "Start sync end time reached", false);
+                        endTime, "Start sync end time reached", false, false);
             }
 
             return new EventResult(syncData.toDBObject(), nextEvents);

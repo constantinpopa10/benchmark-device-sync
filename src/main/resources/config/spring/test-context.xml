@@ -106,7 +106,7 @@
         <constructor-arg name="collection" value="${mirror.syncs}" />
     </bean>
 
-    <bean id="metricsService" class="org.alfresco.monitoring.dao.mongo.MongoMetricsService">
+    <bean id="metricsService" class="org.alfresco.bm.devicesync.dao.mongo.MongoMetricsService">
         <constructor-arg name="db" ref="testMongoDB" />
         <constructor-arg name="collection" value="${testRunFqn}.${syncMetrics}" />
     </bean>

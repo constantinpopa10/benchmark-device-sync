@@ -107,11 +107,21 @@ public class GetSync extends AbstractEventProcessor
         GetChangesResponse getSyncResponse = mapper.readValue(response,
                 GetChangesResponse.class);
 
-        logger.debug("response = " + response);
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("response = " + response);
+        }
 
         String status = getSyncResponse.getStatus();
         switch (status)
         {
+        case "error":
+        {
+            String message = getSyncResponse.getMessage();
+            syncData.error(message);
+            success = false;
+            break;
+        }
         case "notReady":
         {
             String message = getSyncResponse.getMessage();

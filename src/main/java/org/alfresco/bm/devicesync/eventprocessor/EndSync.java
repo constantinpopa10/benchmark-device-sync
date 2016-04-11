@@ -94,7 +94,7 @@ public class EndSync extends AbstractEventProcessor
                     syncData.getNumSyncChanges(), syncData.getNumRetries(),
                     syncData.getFinalNumRetries(),
                     syncData.isMaximumRetriesHit(), syncData.getEndTime(),
-                    "Ended sync " + syncId, syncData.isGotResults());
+                    "Ended sync " + syncId, false, syncData.isGotResults());
 
             return new EventResult(data.toDBObject(), Collections.emptyList());
         }
@@ -108,7 +108,7 @@ public class EndSync extends AbstractEventProcessor
                         syncData.getNumSyncChanges(), syncData.getNumRetries(),
                         syncData.getFinalNumRetries(),
                         syncData.isMaximumRetriesHit(), syncData.getEndTime(),
-                        "Ended sync " + syncId + " (syncId not found)",
+                        "Ended sync " + syncId + " (syncId not found)", true,
                         syncData.isGotResults());
                 return new EventResult(data.toDBObject(),
                         Collections.emptyList());

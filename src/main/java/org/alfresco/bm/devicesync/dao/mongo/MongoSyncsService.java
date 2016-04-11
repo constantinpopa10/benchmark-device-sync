@@ -92,7 +92,7 @@ public class MongoSyncsService implements SyncsService, InitializingBean
             Long lastSyncMs = (Long) dbObject.get(FIELD_LAST_SYNC_MS);
             SyncData subscription = new SyncData(objectId, siteId, username,
                     subscriberId, subscriptionId, lastSyncMs, syncId, -1, -1, 0, false,
-                    null, null, false);
+                    null, null, false, false);
             syncs.add(subscription);
         }
 
