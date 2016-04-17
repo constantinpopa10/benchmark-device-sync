@@ -94,8 +94,7 @@ public class SiteSampleSelector
                             .getSiteMember(siteId, username);
                     String siteRole = siteMemberData.getRole();
 
-                    PathInfo pathInfo = nodesDataService
-                            .randomNodeInSite(siteId);
+                    PathInfo pathInfo = nodesDataService.randomNodeInSite(siteId);
                     UploadFileData uploadFileData = null;
                     if (pathInfo != null)
                     {
@@ -107,6 +106,20 @@ public class SiteSampleSelector
                         List<List<String>> parentNodeIds = pathInfo
                                 .getParentNodeIds();
 
+                        uploadFileData = new UploadFileData(username,
+                                subscriberId, subscriptionId, lastSyncMs, siteId, siteRole,
+                                path, numChildren, numChildFolders, nodeId,
+                                nodeType, parentNodeIds);
+                    }
+                    else
+                    {
+                        // nothing in the mirror, let's upload new content to the site's documentLibrary
+                        String path = "/Company Home/Sites/" + siteId + "/documentLibrary";
+                        Integer numChildren = 0;
+                        Integer numChildFolders = 0;
+                        String nodeType = "cm:folder";
+                        String nodeId = null;
+                        List<List<String>> parentNodeIds = new LinkedList<>();
                         uploadFileData = new UploadFileData(username,
                                 subscriberId, subscriptionId, lastSyncMs, siteId, siteRole,
                                 path, numChildren, numChildFolders, nodeId,

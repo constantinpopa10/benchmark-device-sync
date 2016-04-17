@@ -237,11 +237,14 @@ public class CMISUploadFileHelper extends AbstractUploadFileHelper
             List<String> paths = newFile.getPaths();
             String nodePath = (paths != null && paths.size() > 0 ? paths.get(0)
                     : null);
-            // add the nodeId of the new node to the parent lists of the folder
-            // parent
-            for (List<String> l : parentNodeIds)
+            if(parentNodeIds != null)
             {
-                l.add(0, nodeId);
+                // add the nodeId of the new node to the parent lists of the folder
+                // parent
+                for (List<String> l : parentNodeIds)
+                {
+                    l.add(0, nodeId);
+                }
             }
 
             nodesDataService.addNode(siteId, username, nodeId, nodePath, name,
