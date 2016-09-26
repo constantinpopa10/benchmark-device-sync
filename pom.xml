@@ -84,6 +84,11 @@
         </dependency>
         <dependency>
             <groupId>org.alfresco</groupId>
+            <artifactId>alfresco-benchmark-util</artifactId>
+            <version>${server.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.alfresco</groupId>
             <artifactId>alfresco-benchmark-server</artifactId>
             <version>${server.version}</version>
             <classifier>classes</classifier>
@@ -119,11 +124,6 @@
             	</exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-core</artifactId>
-            <version>6.1</version>
-        </dependency>
 		<dependency>
 		    <groupId>org.apache.httpcomponents</groupId>
 		    <artifactId>httpclient</artifactId>
@@ -138,47 +138,6 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>1.9.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-benchmark-util</artifactId>
-            <version>${server.version}</version>
-            <exclusions>
-            	<exclusion>
-            		<artifactId>alfresco-benchmark-server</artifactId>
-            		<groupId>org.alfresco</groupId>
-            	</exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-benchmark-tests-publicapi</artifactId>
-            <version>${publicapi.version}</version>
-            <classifier>classes</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.alfresco.services.sync</groupId>
-                    <artifactId>service-synchronization-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.seleniumhq.selenium</groupId>
-                    <artifactId>selenium-java</artifactId>
-                </exclusion>
-                <exclusion>
-                	<artifactId>alfresco-benchmark-server</artifactId>
-                	<groupId>org.alfresco</groupId>
-                </exclusion>
-                <exclusion>
-                	<artifactId>
-                		chemistry-opencmis-client-api
-                	</artifactId>
-                	<groupId>org.apache.chemistry.opencmis</groupId>
-                </exclusion>
-                <exclusion>
-                	<artifactId>spring-social-alfresco-bm</artifactId>
-                	<groupId>org.springframework.social</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>
@@ -276,6 +235,11 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.1.1</version>
                 <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
                     <attachClasses>true</attachClasses>
                 </configuration>
             </plugin>

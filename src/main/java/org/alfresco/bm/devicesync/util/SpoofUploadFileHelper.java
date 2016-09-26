@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.alfresco.bm.devicesync.data.SubscriptionData;
 import org.alfresco.bm.devicesync.data.UploadFileData;
@@ -18,7 +19,6 @@ import org.alfresco.events.types.NodeContentPutEvent;
 import org.alfresco.events.types.TransactionCommittedEvent;
 import org.alfresco.repo.Client;
 import org.alfresco.repomirror.dao.NodesDataService;
-import org.alfresco.util.GUID;
 import org.gytheio.messaging.MessageProducer;
 
 /**
@@ -103,7 +103,7 @@ public class SpoofUploadFileHelper extends AbstractUploadFileHelper
             UploadFileData uploadFileData, File file, String filename,
             UploadListener uploadListener) throws IOException
     {
-        String txnId = GUID.generate();
+        String txnId = UUID.randomUUID().toString();
 
         UploadData uploadData = new UploadData().setFilename(filename)
                 .setSubscriptionPath(subscriptionData.getPath())
@@ -148,10 +148,10 @@ public class SpoofUploadFileHelper extends AbstractUploadFileHelper
         String subscriptionPath = subscriptionData.getPath();
         String siteId = subscriptionData.getSiteId();
 
-        String txnId = GUID.generate();
+        String txnId = UUID.randomUUID().toString();
 
         // make up a nodeId (which won't exist in the repository)
-        String nodeId = GUID.generate();
+        String nodeId = UUID.randomUUID().toString();
         UploadData uploadData = new UploadData().setFilename(filename)
                 .setSubscriptionPath(subscriptionPath).setSiteId(siteId)
                 .setUsername(username).setSubscriptionId(subscriptionId)

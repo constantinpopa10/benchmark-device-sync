@@ -7,6 +7,7 @@ import org.alfresco.bm.site.SiteDataService;
 import org.alfresco.bm.site.SiteMemberData;
 
 /**
+ * Extends the SiteDataService
  * 
  * @author sglover
  *

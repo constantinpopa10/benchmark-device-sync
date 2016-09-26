@@ -1,6 +1,7 @@
 package org.alfresco.bm.devicesync.dao.mongo;
 
-import static org.alfresco.bm.devicesync.data.SubscriptionData.*;
+import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_LAST_SYNC_MS;
+import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_RANDOMIZER;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SITE_ID;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_STATE;
 import static org.alfresco.bm.devicesync.data.SubscriptionData.FIELD_SUBSCRIPTION_ID;

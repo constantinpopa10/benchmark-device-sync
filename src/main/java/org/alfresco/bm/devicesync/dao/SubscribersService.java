@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.devicesync.data.SubscriberData;
 import org.bson.types.ObjectId;
-import org.springframework.social.alfresco.api.entities.Subscriber;
 
 /**
  * 
